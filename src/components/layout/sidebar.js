@@ -23,7 +23,7 @@ export function renderSidebar(sources) {
     <nav class="nav-list" aria-label="Dashboard">
       ${navItems.map((item, index) => `
         <a class="${index === 0 ? "active" : ""}" href="#${item.toLowerCase().replaceAll(" ", "-")}">
-          <span class="nav-icon">${navIcon(index)}</span>
+          <span class="nav-icon"><i data-lucide="${navIcon(index)}"></i></span>
           ${item}
         </a>
       `).join("")}
@@ -41,5 +41,5 @@ export function renderSidebar(sources) {
 }
 
 function navIcon(index) {
-  return ["OV", "RT", "FP", "DT", "MC", "AL", "RP", "API", "ST"][index] ?? "--";
+  return ["layout-dashboard", "radio-tower", "trending-up", "map", "activity", "bell", "file-text", "database", "settings"][index] ?? "circle";
 }

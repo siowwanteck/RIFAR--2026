@@ -52,5 +52,38 @@ test("digital twin layers use real Taman Sri Muda coordinates and scale overlays
   assert.deepEqual(now.mapCenter, { lat: 3.0289, lng: 101.5417 });
   assert.ok(now.markers.some((marker) => marker.name === "Pump Station PS2"));
   assert.ok(now.markers.some((marker) => marker.name === "Rain Gauge RG1"));
-  assert.ok(dayAhead.floodOverlays[0].radiusM > now.floodOverlays[0].radiusM);
+  assert.ok(dayAhead.floodOverlays[0].intensity > now.floodOverlays[0].intensity);
+});
+
+test("digital twin overlays are irregular flood polygons, not circles", () => {
+  const state = createInitialState();
+  const layers = getDigitalTwinLayers(state, "12H");
+
+  assert.ok(layers.floodOverlays.length >= 4);
+  assert.ok(layers.floodOverlays.every((overlay) => overlay.geometry.type === "Polygon"));
+  assert.ok(layers.floodOverlays.every((overlay) => overlay.geometry.coordinates[0].length >= 6));
+  assert.ok(layers.floodOverlays.every((overlay) => !("radiusM" in overlay)));
+});
+
+test("forecast exposes compact chart stops for the command dashboard line chart", () => {
+  const forecast = generateForecast48h(createInitialState());
+
+  assert.deepEqual(
+    forecast.chartTimeline.map((point) => point.label),
+    ["NOW", "+3h", "+6h", "+12h", "+24h", "+48h"],
+  );
+});
+
+test("system status is data-platform focused and does not expose API endpoint rows", async () => {
+  const layers = getDigitalTwinLayers(createInitialState(), "NOW");
+  const { getSystemStatus } = await import("../src/services/mockApi.js");
+  const status = getSystemStatus();
+  const names = status.sources.map((source) => source.name);
+
+  assert.ok(layers.mapEngines.includes("leaflet-2d"));
+  assert.ok(layers.mapEngines.includes("maplibre-3d"));
+  assert.ok(names.includes("IoT Sensor Feed"));
+  assert.ok(names.includes("Simulation Engine"));
+  assert.ok(names.includes("Prediction Model"));
+  assert.ok(!names.some((name) => name.startsWith("GET ")));
 });

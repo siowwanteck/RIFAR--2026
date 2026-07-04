@@ -66,13 +66,8 @@ export function getDigitalTwinLayers(state = currentState, scenarioKey = "NOW") 
       status: markerStatus(marker.id, state),
       value: markerValue(marker.id, state),
     })),
-    floodOverlays: affectedZones.map((zone) => ({
-      ...zone,
-      radiusM: Math.round(zone.baseRadiusM + intensity * 520 * zone.riskBias),
-      depthM: round(Math.max(0.08, scenario.depthM * zone.riskBias), 2),
-      riskLevel: scenario.riskLevel,
-      opacity: round(0.2 + intensity * 0.42, 2),
-    })),
+    floodOverlays: affectedZones.map((zone) => buildFloodPolygon(zone, scenario, intensity)),
+    mapEngines: ["leaflet-2d", "maplibre-3d"],
     layers: ["Water depth", "Sensor locations", "Pump stations", "Attenuation tanks", "Tidal gates", "Affected roads", "Safe routes"],
   };
 }
@@ -101,13 +96,13 @@ export function getAlertsTimeline() {
 export function getSystemStatus() {
   return {
     sources: [
-      { name: "IoT Sensors", status: "OPERATIONAL" },
-      { name: "Data Ingestion", status: "OPERATIONAL" },
-      { name: "AI Model", status: currentState.risk.score >= 88 ? "WARNING" : "OPERATIONAL" },
-      { name: "Cloud Connection", status: "OPERATIONAL" },
-      { name: "Weather API", status: "OPERATIONAL" },
-      { name: "River Level API", status: "OPERATIONAL" },
-      { name: "Tidal API", status: "OPERATIONAL" },
+      { name: "IoT Sensor Feed", status: "OPERATIONAL" },
+      { name: "Weather Data Feed", status: "OPERATIONAL" },
+      { name: "River Level Data", status: "OPERATIONAL" },
+      { name: "Tidal Data", status: "OPERATIONAL" },
+      { name: "Simulation Engine", status: "OPERATIONAL" },
+      { name: "Prediction Model", status: currentState.risk.score >= 88 ? "WARNING" : "OPERATIONAL" },
+      { name: "Data Sync", status: "OPERATIONAL" },
     ],
     model: {
       accuracy7Day: round(91.4 + currentState.risk.confidencePercent / 100, 1),
@@ -162,6 +157,30 @@ export function getApiPayload(pathname) {
 
 function sensor(id, type, location, value, trend) {
   return { id, type, status: "ONLINE", location, value, trend };
+}
+
+function buildFloodPolygon(zone, scenario, intensity) {
+  const scale = 0.7 + intensity * zone.riskBias;
+  const coordinates = zone.shape.map(([lngOffset, latOffset]) => [
+    round(zone.lng + lngOffset * scale, 6),
+    round(zone.lat + latOffset * scale, 6),
+  ]);
+  coordinates.push(coordinates[0]);
+
+  return {
+    id: zone.id,
+    name: zone.name,
+    lat: zone.lat,
+    lng: zone.lng,
+    intensity: round(intensity * zone.riskBias, 3),
+    depthM: round(Math.max(0.08, scenario.depthM * zone.riskBias), 2),
+    riskLevel: scenario.riskLevel,
+    opacity: round(0.18 + intensity * 0.4, 2),
+    geometry: {
+      type: "Polygon",
+      coordinates: [coordinates],
+    },
+  };
 }
 
 function markerStatus(id, state) {

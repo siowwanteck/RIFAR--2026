@@ -29,10 +29,14 @@ export function createLiveSimulation({ intervalMs = 3000, onUpdate }) {
     emit();
   }
 
+  function refresh() {
+    emit();
+  }
+
   function confirm(actionId) {
     confirmRecommendedAction(actionId);
     emit();
   }
 
-  return { start, stop, setScenario, confirm };
+  return { start, stop, setScenario, confirm, refresh };
 }

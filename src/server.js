@@ -8,6 +8,7 @@ import { confirmRecommendedAction, getApiPayload } from "./services/mockApi.js";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const publicDir = join(root, "public");
 const sourceDir = join(root, "src");
+const nodeModulesDir = join(root, "node_modules");
 const port = Number(process.env.PORT ?? 4173);
 
 const contentTypes = {
@@ -50,6 +51,11 @@ async function serveFile(baseDir, pathname, response) {
 async function serveStatic(pathname, response) {
   if (pathname.startsWith("/src/")) {
     await serveFile(sourceDir, pathname.replace(/^\/src/, ""), response);
+    return;
+  }
+
+  if (pathname.startsWith("/node_modules/")) {
+    await serveFile(nodeModulesDir, pathname.replace(/^\/node_modules/, ""), response);
     return;
   }
 

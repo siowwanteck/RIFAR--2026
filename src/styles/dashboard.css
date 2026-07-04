@@ -119,6 +119,15 @@ button {
   color: var(--cyan);
 }
 
+.nav-icon svg,
+.kpi-icon svg,
+.recommendation-icon svg,
+.fiass-marker svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.1;
+}
+
 .rail-status,
 .version {
   border: 1px solid var(--line);
@@ -299,21 +308,20 @@ select {
 
 .kpi-card {
   display: grid;
-  grid-template-columns: 52px 1fr;
+  grid-template-columns: 48px 1fr;
   align-items: center;
-  gap: 14px;
-  min-height: 108px;
-  padding: 16px;
+  gap: 12px;
+  min-height: 100px;
+  padding: 14px;
 }
 
 .kpi-icon {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 1px solid currentColor;
-  font-size: 1.7rem;
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -359,7 +367,7 @@ select {
 }
 
 .right-stack {
-  grid-template-rows: 310px minmax(230px, auto) minmax(185px, auto);
+  grid-template-rows: 284px minmax(222px, auto) minmax(168px, auto);
 }
 
 .bottom-grid {
@@ -423,17 +431,23 @@ select {
 
 .map-shell {
   position: relative;
-  height: 545px;
+  height: 488px;
   overflow: hidden;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: #0a1724;
 }
 
-.leaflet-map {
+.digital-twin-map,
+.leaflet-map,
+.maplibre-map {
   width: 100%;
   height: 100%;
   filter: saturate(0.85) contrast(1.05) brightness(0.78);
+}
+
+.maplibre-map {
+  filter: saturate(0.95) contrast(1.08) brightness(0.78);
 }
 
 .leaflet-tile-pane {
@@ -452,7 +466,8 @@ select {
 }
 
 .map-legend,
-.scenario-chip {
+.scenario-chip,
+.mode-chip {
   position: absolute;
   z-index: 500;
   border: 1px solid var(--line);
@@ -490,12 +505,22 @@ select {
 .depth-4 { background: rgba(72, 76, 218, 0.7); }
 .depth-5 { background: rgba(126, 75, 238, 0.8); }
 
-.scenario-chip {
+.scenario-chip,
+.mode-chip {
   right: 14px;
-  top: 16px;
   padding: 10px 12px;
   color: #dcecff;
   font-size: 0.82rem;
+}
+
+.scenario-chip {
+  top: 16px;
+}
+
+.mode-chip {
+  right: 14px;
+  top: 58px;
+  color: var(--cyan);
 }
 
 .fiass-marker {
@@ -532,36 +557,84 @@ select {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-.risk-chart {
+.risk-line-chart {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  align-items: end;
-  gap: 9px;
-  height: 155px;
-  padding-top: 10px;
+  height: 164px;
+  padding: 8px 0 0 38px;
   border-bottom: 1px solid var(--line);
 }
 
-.risk-point {
-  position: relative;
+.risk-zones {
+  position: absolute;
+  inset: 8px auto 25px 0;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  height: var(--risk-height);
-  min-height: 34px;
-  padding-bottom: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px 8px 0 0;
-  background: linear-gradient(180deg, currentColor, rgba(255, 255, 255, 0.08));
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.68rem;
 }
 
-.risk-point.active {
-  outline: 2px solid rgba(255, 255, 255, 0.35);
+.risk-line-chart svg {
+  display: block;
+  width: 100%;
+  height: 124px;
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(130, 87, 255, 0.08) 0 22%, transparent 22% 100%),
+    linear-gradient(180deg, transparent 0 27%, rgba(255, 90, 80, 0.08) 27% 47%, transparent 47% 100%),
+    linear-gradient(180deg, transparent 0 50%, rgba(242, 169, 59, 0.07) 50% 70%, transparent 70% 100%);
 }
 
-.risk-point span {
-  color: white;
+.risk-area {
+  fill: url("#riskLineFill");
+}
+
+.risk-line {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.risk-dot {
+  fill: var(--bg-950);
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.risk-dot.active {
+  r: 6px;
+  stroke: #ffffff;
+}
+
+.risk-axis {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.risk-axis button {
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 0.7rem;
+}
+
+.risk-axis button.active {
+  color: var(--cyan);
+}
+
+.selected-risk {
+  position: absolute;
+  right: 0;
+  top: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(3, 13, 22, 0.68);
   font-size: 0.72rem;
 }
 
@@ -569,7 +642,7 @@ select {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 13px;
+  margin-top: 11px;
 }
 
 .forecast-summary div {
@@ -600,7 +673,7 @@ meter {
   display: grid;
   grid-template-columns: 34px 1fr 78px;
   gap: 10px;
-  padding: 10px;
+  padding: 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(3, 13, 22, 0.35);
@@ -655,7 +728,7 @@ meter {
   display: grid;
   grid-template-columns: 64px 1fr;
   gap: 10px;
-  padding: 9px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -670,7 +743,7 @@ table {
 
 th,
 td {
-  padding: 10px 9px;
+  padding: 8px 9px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   white-space: nowrap;
@@ -743,22 +816,6 @@ td {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(3, 13, 22, 0.28);
-}
-
-.api-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin-top: 10px;
-}
-
-code {
-  padding: 8px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: #bfeaff;
-  background: rgba(3, 13, 22, 0.62);
-  font-size: 0.72rem;
 }
 
 .map-unavailable {

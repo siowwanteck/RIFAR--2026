@@ -9,7 +9,7 @@ The dashboard follows `DASHBOARD.png` as the visual source of truth.
 - Six KPI cards across the top.
 - Large central Digital Twin map.
 - Right stack for 48-hour forecast, AI recommended actions, and active alerts.
-- Bottom grid for sensors, affected areas, and system/API status.
+- Bottom grid for sensors, affected areas, and system/data status.
 
 ## Visual Direction
 
@@ -23,7 +23,10 @@ The dashboard follows `DASHBOARD.png` as the visual source of truth.
 
 ## Digital Twin
 
-The map uses Leaflet with OpenStreetMap tiles centered on Taman Sri Muda, Shah Alam.
+The Digital Twin has two map modes centered on Taman Sri Muda, Shah Alam:
+
+- 2D mode uses Leaflet with OpenStreetMap tiles.
+- 3D mode uses MapLibre GL JS with an open map style, tilted camera, flood GeoJSON layers, and raised flood-depth extrusion. It does not require a Mapbox token or paid API.
 
 Map layers include:
 
@@ -38,4 +41,6 @@ Map layers include:
 - Water Level Sensor WL1
 - Rain Gauge RG1
 
-Flood overlays scale by selected timeline scenario and current simulated risk.
+Flood overlays use multiple irregular polygons so affected areas look like scattered road and drainage flooding instead of perfect circles. Polygon opacity, depth, and extrusion height scale by selected timeline scenario and current simulated risk.
+
+The 48-hour forecast uses a line chart with NOW, +3h, +6h, +12h, +24h, and +48h points, plus LOW, MEDIUM, HIGH, and CRITICAL risk zones.

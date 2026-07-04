@@ -36,6 +36,7 @@ export function generateForecast48h(state) {
 
   return {
     timeline,
+    chartTimeline: timeline.filter((point) => ["NOW", "3H", "6H", "12H", "24H", "48H"].includes(point.key)),
     peak: {
       ...peak,
       eta: peak.key === "NOW" ? "now" : peak.label,

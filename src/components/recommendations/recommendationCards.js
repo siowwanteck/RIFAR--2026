@@ -11,7 +11,7 @@ export function renderRecommendationCards(recommendations) {
     <div class="recommendation-list">
       ${recommendations.map((item) => `
         <article class="recommendation ${riskClass(item.priority)} ${item.status}">
-          <div class="recommendation-icon">${iconFor(item.id)}</div>
+          <div class="recommendation-icon"><i data-lucide="${iconFor(item.id)}"></i></div>
           <div class="recommendation-copy">
             <strong>${item.title}</strong>
             <span>${item.reason}</span>
@@ -30,8 +30,8 @@ export function renderRecommendationCards(recommendations) {
 }
 
 function iconFor(id) {
-  if (id.includes("ps2")) return "P2";
-  if (id.includes("ps3")) return "P3";
-  if (id.includes("gate")) return "TG";
-  return "AR";
+  if (id.includes("ps2")) return "power";
+  if (id.includes("ps3")) return "activity";
+  if (id.includes("gate")) return "git-branch";
+  return "map-pinned";
 }

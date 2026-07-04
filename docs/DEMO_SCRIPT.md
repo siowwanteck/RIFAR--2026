@@ -16,12 +16,12 @@ Goal: explain the product in 3 minutes.
 
 - KPI row: current risk is HIGH and increasing.
 - Digital Twin: switch from NOW to +24h.
-- Digital Twin: show real OpenStreetMap context around Taman Sri Muda.
-- Forecast panel: peak risk is CRITICAL with 87% confidence.
+- Digital Twin: show real OpenStreetMap context around Taman Sri Muda in 2D, then switch to 3D to show the tilted MapLibre digital twin with raised flood zones.
+- Forecast panel: show the line chart, risk zones, peak ETA, and confidence.
 - Recommended actions: confirm Activate Pump PS2.
 - Watch KPIs, forecast, alerts, and map overlays update after confirmation.
 - Affected areas: Seksyen 25 and Seksyen 26 appear first.
-- API panel: FIaaS is both a dashboard and an integration platform.
+- System & Data Status: FIaaS is tracking sensor, weather, river, tidal, simulation, prediction, and sync health.
 
 ## What Not To Claim
 

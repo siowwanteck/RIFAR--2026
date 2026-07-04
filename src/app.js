@@ -13,6 +13,7 @@ import { createLiveSimulation } from "./hooks/useLiveSimulation.js";
 
 let map;
 let simulation;
+let mapMode = "2d";
 
 function qs(selector) {
   return document.querySelector(selector);
@@ -31,14 +32,20 @@ function render(state, selectedScenarioKey) {
   setClock();
 
   if (!map) {
-    qs("#map-panel").innerHTML = renderMapPanel(state, selectedScenarioKey);
-    map = new LeafletDigitalTwin("leaflet-map");
-    map.mount(state.digitalTwin);
+    qs("#map-panel").innerHTML = renderMapPanel(state, selectedScenarioKey, mapMode);
+    map = new LeafletDigitalTwin("digital-twin-map");
+    map.mount(state.digitalTwin, mapMode);
   } else {
     qs("#timeline-buttons").innerHTML = renderTimelineButtons(state.forecast.timeline, selectedScenarioKey);
     qs(".scenario-chip").textContent = scenarioChipText(state);
+    qs("#mode-chip").textContent = mapMode === "3d" ? "3D Digital Twin Mode" : "2D Live Map Mode";
+    document.querySelectorAll("[data-map-mode]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.mapMode === mapMode);
+    });
+    map.switchMode(mapMode, state.digitalTwin);
     map.update(state.digitalTwin);
   }
+  window.lucide?.createIcons?.();
 }
 
 function setClock() {
@@ -55,6 +62,13 @@ document.addEventListener("click", (event) => {
   const scenarioButton = event.target.closest("[data-scenario]");
   if (scenarioButton) {
     simulation.setScenario(scenarioButton.dataset.scenario);
+    return;
+  }
+
+  const mapModeButton = event.target.closest("[data-map-mode]");
+  if (mapModeButton) {
+    mapMode = mapModeButton.dataset.mapMode;
+    simulation.refresh();
     return;
   }
 

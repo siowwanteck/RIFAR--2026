@@ -20,6 +20,9 @@ The MVP uses a local mock simulation engine. It is structured so real MQTT, Infl
 - Activating Pump PS2 reduces water pressure over later simulation ticks.
 - Confirmed actions are added to the operational timeline.
 - Forecast and map overlays update from the current simulation state.
+- Digital Twin overlays are generated as irregular GeoJSON polygons and rendered in both Leaflet 2D and MapLibre 3D modes.
+- The 48-hour forecast exposes a compact chart timeline for NOW, +3h, +6h, +12h, +24h, and +48h.
+- System status reports data feeds and model health rather than implementation endpoint rows.
 
 ## MVP Limits
 

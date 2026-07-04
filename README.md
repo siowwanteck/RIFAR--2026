@@ -7,6 +7,7 @@ The platform demonstrates:
 - synthetic IoT and environmental data
 - 48-hour flood risk prediction
 - Digital Twin scenario data
+- 2D Leaflet and 3D MapLibre digital twin modes
 - human-in-the-loop pump recommendations
 - REST APIs for dashboard and integration use
 - a dark control-room dashboard
@@ -44,9 +45,9 @@ npm test
 
 ## Runtime Note
 
-The project documentation names Spring Boot and React as the target production stack. This MVP implementation uses a dependency-free Node.js server and static frontend so the demo runs offline without Maven, npm installs, or network access. The REST API paths and payloads are shaped so a later Spring Boot and React build can replace the runtime without changing the product story.
+The project documentation names Spring Boot and React as the target production stack. This MVP implementation uses a small Node.js server and static frontend so the demo remains easy to run locally. The REST API paths and payloads are shaped so a later Spring Boot and React build can replace the runtime without changing the product story.
 
-The Digital Twin uses Leaflet and OpenStreetMap tiles from public CDNs. The dashboard still runs locally, but the real map tiles need browser internet access.
+The Digital Twin uses Leaflet for 2D mode and MapLibre GL JS for 3D mode. No paid map API or Mapbox token is required, but real map tiles need browser internet access.
 
 ## MVP Boundaries
 

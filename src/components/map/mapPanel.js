@@ -1,4 +1,4 @@
-export function renderMapPanel(state, selectedScenarioKey) {
+export function renderMapPanel(state, selectedScenarioKey, mapMode) {
   return `
     <div class="panel-header map-header">
       <div>
@@ -6,8 +6,8 @@ export function renderMapPanel(state, selectedScenarioKey) {
         <h2>Live map intelligence</h2>
       </div>
       <div class="map-mode-group">
-        <button type="button" class="active">2D</button>
-        <button type="button">3D</button>
+        <button type="button" class="${mapMode === "2d" ? "active" : ""}" data-map-mode="2d">2D</button>
+        <button type="button" class="${mapMode === "3d" ? "active" : ""}" data-map-mode="3d">3D</button>
         <button type="button">Layer</button>
       </div>
     </div>
@@ -15,7 +15,7 @@ export function renderMapPanel(state, selectedScenarioKey) {
       ${renderTimelineButtons(state.forecast.timeline, selectedScenarioKey)}
     </div>
     <div class="map-shell">
-      <div id="leaflet-map" class="leaflet-map"></div>
+      <div id="digital-twin-map" class="digital-twin-map"></div>
       <div class="legend map-legend">
         <strong>Water depth (m)</strong>
         <span><i class="depth-5"></i>&gt; 1.0</span>
@@ -25,6 +25,7 @@ export function renderMapPanel(state, selectedScenarioKey) {
         <span><i class="depth-1"></i>0 - 0.1</span>
       </div>
       <div class="scenario-chip">${scenarioChipText(state)}</div>
+      <div class="mode-chip" id="mode-chip">${modeChipText(mapMode)}</div>
     </div>
   `;
 }
@@ -39,4 +40,8 @@ export function renderTimelineButtons(timeline, selectedScenarioKey) {
 
 export function scenarioChipText(state) {
   return `${state.digitalTwin.selectedScenario.label} - ${state.digitalTwin.selectedScenario.riskLevel}`;
+}
+
+export function modeChipText(mapMode) {
+  return mapMode === "3d" ? "3D Digital Twin Mode" : "2D Live Map Mode";
 }

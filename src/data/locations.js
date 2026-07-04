@@ -22,8 +22,36 @@ export const mapMarkers = [
 ];
 
 export const affectedZones = [
-  { id: "zone-25", name: "Seksyen 25", lat: 3.0254, lng: 101.5368, baseRadiusM: 240, riskBias: 1.08 },
-  { id: "zone-26", name: "Seksyen 26", lat: 3.0218, lng: 101.5442, baseRadiusM: 210, riskBias: 0.96 },
-  { id: "zone-27", name: "Seksyen 27", lat: 3.0345, lng: 101.5487, baseRadiusM: 180, riskBias: 0.72 },
-  { id: "persiaran", name: "Persiaran Sri Muda", lat: 3.0293, lng: 101.5334, baseRadiusM: 160, riskBias: 0.64 },
+  {
+    id: "zone-25",
+    name: "Seksyen 25",
+    lat: 3.0254,
+    lng: 101.5368,
+    riskBias: 1.08,
+    shape: [[-0.0022, -0.0008], [-0.001, -0.0023], [0.0017, -0.0019], [0.0025, -0.0002], [0.0015, 0.0016], [-0.0014, 0.0014]],
+  },
+  {
+    id: "zone-26",
+    name: "Seksyen 26",
+    lat: 3.0218,
+    lng: 101.5442,
+    riskBias: 0.96,
+    shape: [[-0.0017, -0.0009], [-0.0005, -0.002], [0.0018, -0.0015], [0.0021, 0.0005], [0.0006, 0.0018], [-0.0019, 0.0011]],
+  },
+  {
+    id: "zone-27",
+    name: "Seksyen 27",
+    lat: 3.0345,
+    lng: 101.5487,
+    riskBias: 0.72,
+    shape: [[-0.0015, -0.0005], [-0.0006, -0.0016], [0.0013, -0.0012], [0.0019, 0.0002], [0.0009, 0.0013], [-0.0012, 0.001]],
+  },
+  {
+    id: "persiaran",
+    name: "Persiaran Sri Muda",
+    lat: 3.0293,
+    lng: 101.5334,
+    riskBias: 0.64,
+    shape: [[-0.0024, -0.0004], [-0.0008, -0.001], [0.0022, -0.0006], [0.0028, 0.0005], [0.0002, 0.001], [-0.0021, 0.0007]],
+  },
 ];
