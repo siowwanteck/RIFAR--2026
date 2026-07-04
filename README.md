@@ -47,7 +47,7 @@ npm test
 
 The project documentation names Spring Boot and React as the target production stack. This MVP implementation uses a small Node.js server and static frontend so the demo remains easy to run locally. The REST API paths and payloads are shaped so a later Spring Boot and React build can replace the runtime without changing the product story.
 
-The Digital Twin uses Leaflet for 2D mode and MapLibre GL JS for 3D mode. No paid map API or Mapbox token is required, but real map tiles need browser internet access.
+The Digital Twin uses Leaflet for 2D mode and MapLibre GL JS with OpenFreeMap vector tiles for 3D mode. No paid map API or Mapbox token is required, but real map tiles need browser internet access. Building extrusion appears where open building data is available.
 
 ## MVP Boundaries
 

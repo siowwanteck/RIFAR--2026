@@ -357,6 +357,7 @@ select {
 .operations-grid {
   display: grid;
   grid-template-columns: minmax(720px, 1fr) 420px;
+  align-items: start;
   gap: 12px;
 }
 
@@ -378,6 +379,11 @@ select {
 .panel {
   padding: 14px;
   overflow: hidden;
+}
+
+.map-panel {
+  display: grid;
+  grid-template-rows: auto auto auto;
 }
 
 .panel-header {
@@ -431,7 +437,7 @@ select {
 
 .map-shell {
   position: relative;
-  height: 488px;
+  height: clamp(428px, calc(100vh - 326px), 540px);
   overflow: hidden;
   border: 1px solid var(--line-strong);
   border-radius: 8px;

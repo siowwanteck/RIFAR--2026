@@ -1,4 +1,5 @@
 import { riskClass } from "../../utils/formatters.js";
+import { mapLibre3dConfig } from "../../data/mapConfig.js";
 
 const riskColors = {
   LOW: "#24d17e",
@@ -71,16 +72,19 @@ export class LeafletDigitalTwin {
     this.pendingLayers = layers;
     this.maplibreMap = new window.maplibregl.Map({
       container,
-      style: "https://demotiles.maplibre.org/style.json",
+      style: mapLibre3dConfig.styleUrl,
       center: [layers.mapCenter.lng, layers.mapCenter.lat],
-      zoom: 13.8,
-      pitch: 60,
-      bearing: -20,
+      zoom: mapLibre3dConfig.camera.zoom,
+      pitch: mapLibre3dConfig.camera.pitch,
+      bearing: mapLibre3dConfig.camera.bearing,
       attributionControl: false,
     });
 
     this.maplibreMap.addControl(new window.maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
-    this.maplibreMap.on("load", () => this.update(this.pendingLayers));
+    this.maplibreMap.on("load", () => {
+      addBuildingExtrusions(this.maplibreMap);
+      this.update(this.pendingLayers);
+    });
   }
 
   update(layers) {
@@ -182,7 +186,7 @@ export class LeafletDigitalTwin {
           "fill-color": ["get", "color"],
           "fill-opacity": ["get", "opacity"],
         },
-      });
+      }, firstSymbolLayerId(this.maplibreMap));
     }
 
     if (!this.maplibreMap.getLayer("flood-extrusion")) {
@@ -196,7 +200,7 @@ export class LeafletDigitalTwin {
           "fill-extrusion-base": 0,
           "fill-extrusion-opacity": 0.42,
         },
-      });
+      }, firstSymbolLayerId(this.maplibreMap));
     }
 
     if (!this.maplibreMap.getLayer("asset-circles")) {
@@ -234,9 +238,9 @@ export class LeafletDigitalTwin {
 
     this.maplibreMap.easeTo({
       center: [layers.mapCenter.lng, layers.mapCenter.lat],
-      zoom: 13.8,
-      pitch: 60,
-      bearing: -20,
+      zoom: mapLibre3dConfig.camera.zoom,
+      pitch: mapLibre3dConfig.camera.pitch,
+      bearing: mapLibre3dConfig.camera.bearing,
       duration: 500,
     });
   }
@@ -262,6 +266,49 @@ function upsertGeoJsonSource(map, sourceId, data) {
     return;
   }
   map.addSource(sourceId, { type: "geojson", data });
+}
+
+function addBuildingExtrusions(map) {
+  const style = map.getStyle();
+  const sourceId = mapLibre3dConfig.vectorSourceCandidates.find((candidate) => style.sources?.[candidate]?.type === "vector");
+  const beforeId = firstSymbolLayerId(map);
+
+  if (!sourceId || map.getLayer(mapLibre3dConfig.buildingLayers[0].id)) return;
+
+  // Open-source styles vary by region and tile schema; this layer appears when OpenMapTiles building data is available.
+  map.addLayer({
+    id: mapLibre3dConfig.buildingLayers[0].id,
+    type: "fill-extrusion",
+    source: sourceId,
+    "source-layer": mapLibre3dConfig.buildingLayers[0].sourceLayer,
+    minzoom: 13,
+    paint: {
+      "fill-extrusion-color": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        13,
+        "#19334a",
+        16,
+        "#3f6681",
+      ],
+      "fill-extrusion-height": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        13,
+        0,
+        15,
+        ["coalesce", ["to-number", ["get", "render_height"]], ["to-number", ["get", "height"]], 18],
+      ],
+      "fill-extrusion-base": ["coalesce", ["to-number", ["get", "render_min_height"]], 0],
+      "fill-extrusion-opacity": 0.55,
+    },
+  }, beforeId);
+}
+
+function firstSymbolLayerId(map) {
+  return map.getStyle().layers?.find((layer) => layer.type === "symbol")?.id;
 }
 
 function resetContainer(containerId, className) {

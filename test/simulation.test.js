@@ -5,6 +5,7 @@ import { createInitialState } from "../src/data/initialState.js";
 import { advanceSimulation } from "../src/simulation/floodModel.js";
 import { generateForecast48h } from "../src/simulation/weatherScenario.js";
 import { getDigitalTwinLayers } from "../src/services/mockApi.js";
+import { mapLibre3dConfig } from "../src/data/mapConfig.js";
 
 test("heavy rain increases water level, tank capacity, risk, and affected area", () => {
   const state = createInitialState();
@@ -86,4 +87,13 @@ test("system status is data-platform focused and does not expose API endpoint ro
   assert.ok(names.includes("Simulation Engine"));
   assert.ok(names.includes("Prediction Model"));
   assert.ok(!names.some((name) => name.startsWith("GET ")));
+});
+
+test("3D digital twin uses an open vector city style and building extrusion config", () => {
+  assert.equal(mapLibre3dConfig.styleUrl, "https://tiles.openfreemap.org/styles/liberty");
+  assert.notEqual(mapLibre3dConfig.styleUrl, "https://demotiles.maplibre.org/style.json");
+  assert.equal(mapLibre3dConfig.camera.pitch, 62);
+  assert.equal(mapLibre3dConfig.camera.bearing, -22);
+  assert.ok(mapLibre3dConfig.buildingLayers.length >= 1);
+  assert.ok(mapLibre3dConfig.buildingLayers.every((layer) => layer.type === "fill-extrusion"));
 });

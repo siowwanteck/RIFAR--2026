@@ -26,7 +26,8 @@ The dashboard follows `DASHBOARD.png` as the visual source of truth.
 The Digital Twin has two map modes centered on Taman Sri Muda, Shah Alam:
 
 - 2D mode uses Leaflet with OpenStreetMap tiles.
-- 3D mode uses MapLibre GL JS with an open map style, tilted camera, flood GeoJSON layers, and raised flood-depth extrusion. It does not require a Mapbox token or paid API.
+- 3D mode uses MapLibre GL JS with the OpenFreeMap Liberty vector style, tilted camera, flood GeoJSON layers, raised flood-depth extrusion, roads, water, landuse, and labels. It does not require a Mapbox token or paid API.
+- 3D building extrusion is added when the loaded OpenMapTiles/OpenStreetMap vector data exposes building geometry for the area. If building data is sparse around Taman Sri Muda, the 3D view still shows the real city basemap with roads, rivers, labels, flood polygons, and infrastructure markers.
 
 Map layers include:
 
