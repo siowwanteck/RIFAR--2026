@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { confirmAction, getApiPayload } from "./fiassData.js";
+import { confirmRecommendedAction, getApiPayload } from "./services/mockApi.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const publicDir = join(root, "public");
+const sourceDir = join(root, "src");
 const port = Number(process.env.PORT ?? 4173);
 
 const contentTypes = {
@@ -26,11 +27,11 @@ function sendJson(response, statusCode, payload) {
   response.end(JSON.stringify(payload, null, 2));
 }
 
-async function serveStatic(pathname, response) {
+async function serveFile(baseDir, pathname, response) {
   const requested = pathname === "/" ? "/index.html" : pathname;
-  const filePath = normalize(join(publicDir, requested));
+  const filePath = normalize(join(baseDir, requested));
 
-  if (!filePath.startsWith(publicDir)) {
+  if (!filePath.startsWith(baseDir)) {
     response.writeHead(403);
     response.end("Forbidden");
     return;
@@ -44,6 +45,15 @@ async function serveStatic(pathname, response) {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
     response.end("Not found");
   }
+}
+
+async function serveStatic(pathname, response) {
+  if (pathname.startsWith("/src/")) {
+    await serveFile(sourceDir, pathname.replace(/^\/src/, ""), response);
+    return;
+  }
+
+  await serveFile(publicDir, pathname, response);
 }
 
 async function handleRequest(request, response) {
@@ -61,8 +71,8 @@ async function handleRequest(request, response) {
 
   if (request.method === "POST" && url.pathname.startsWith("/api/flood/actions/") && url.pathname.endsWith("/confirm")) {
     const actionId = url.pathname.split("/").at(-2);
-    const result = confirmAction(actionId);
-    sendJson(response, result.status === "not_found" ? 404 : 200, result);
+    const result = confirmRecommendedAction(actionId);
+    sendJson(response, 200, result);
     return;
   }
 

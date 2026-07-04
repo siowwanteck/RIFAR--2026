@@ -20,6 +20,13 @@ Requirements:
 Start the MVP:
 
 ```powershell
+npm install
+npm run dev
+```
+
+or:
+
+```powershell
 npm start
 ```
 
@@ -38,6 +45,8 @@ npm test
 ## Runtime Note
 
 The project documentation names Spring Boot and React as the target production stack. This MVP implementation uses a dependency-free Node.js server and static frontend so the demo runs offline without Maven, npm installs, or network access. The REST API paths and payloads are shaped so a later Spring Boot and React build can replace the runtime without changing the product story.
+
+The Digital Twin uses Leaflet and OpenStreetMap tiles from public CDNs. The dashboard still runs locally, but the real map tiles need browser internet access.
 
 ## MVP Boundaries
 

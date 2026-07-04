@@ -10,14 +10,16 @@ Goal: explain the product in 3 minutes.
 4. The Digital Twin timeline shows how affected areas expand from now to 24 hours.
 5. The decision engine recommends activating Pump Station PS2.
 6. The operator confirms the recommendation.
-7. FIaaS records the decision while keeping pump operation human-in-the-loop.
+7. FIaaS records the decision, starts Pump PS2 in mock mode, lowers water pressure over later ticks, and keeps pump operation human-in-the-loop.
 
 ## What To Show
 
 - KPI row: current risk is HIGH and increasing.
 - Digital Twin: switch from NOW to +24h.
+- Digital Twin: show real OpenStreetMap context around Taman Sri Muda.
 - Forecast panel: peak risk is CRITICAL with 87% confidence.
 - Recommended actions: confirm Activate Pump PS2.
+- Watch KPIs, forecast, alerts, and map overlays update after confirmation.
 - Affected areas: Seksyen 25 and Seksyen 26 appear first.
 - API panel: FIaaS is both a dashboard and an integration platform.
 

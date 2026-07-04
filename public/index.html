@@ -4,196 +4,36 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>FIaaS - Flood Intelligence as a Service</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/src/styles/dashboard.css">
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar" aria-label="Primary">
-        <div class="brand">
-          <div class="brand-mark" aria-hidden="true"></div>
-          <div>
-            <strong>FIaaS</strong>
-            <span>Flood Intelligence</span>
-          </div>
-        </div>
-
-        <nav class="nav-list">
-          <a class="active" href="#overview">Overview</a>
-          <a href="#monitoring">Real-time Monitoring</a>
-          <a href="#forecast">Forecast & Prediction</a>
-          <a href="#digital-twin">Digital Twin Map</a>
-          <a href="#mitigation">Mitigation & Control</a>
-          <a href="#alerts">Alerts & Notifications</a>
-          <a href="#api">API & Integrations</a>
-          <a href="#settings">Settings</a>
-        </nav>
-
-        <section class="rail-status" aria-labelledby="rail-status-title">
-          <h2 id="rail-status-title">System Status</h2>
-          <div id="rail-status-list"></div>
-        </section>
-
-        <div class="version">FIaaS v1.0.0</div>
-      </aside>
+      <aside class="sidebar" id="sidebar" aria-label="Primary"></aside>
 
       <main class="workspace">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Flood Intelligence as a Service</p>
-            <h1>Taman Sri Muda command view</h1>
-          </div>
-          <div class="topbar-actions">
-            <label class="location-select">
-              <span>Location</span>
-              <select id="location-select">
-                <option>Taman Sri Muda, Selangor</option>
-              </select>
-            </label>
-            <span class="live-pill">Live</span>
-            <span id="weather-summary" class="weather-pill">Loading weather</span>
-            <span id="alert-count" class="alert-pill">0 alerts</span>
-            <span id="clock" class="clock-pill">--:--</span>
-          </div>
-        </header>
-
+        <header class="topbar" id="topbar"></header>
         <section id="kpi-row" class="kpi-row" aria-label="Flood intelligence summary"></section>
 
         <section class="operations-grid">
-          <article class="panel map-panel" id="digital-twin">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Digital Twin</p>
-                <h2>Taman Sri Muda floodglass</h2>
-              </div>
-              <div class="mode-group" role="group" aria-label="Digital Twin mode">
-                <button class="mode-button active" type="button" data-mode="live">Live</button>
-                <button class="mode-button" type="button" data-mode="prediction">Prediction</button>
-              </div>
-            </div>
-
-            <div class="timeline" id="timeline-buttons" aria-label="Prediction timeline"></div>
-
-            <div class="map-stage" id="map-stage">
-              <div class="map-grid" aria-hidden="true"></div>
-              <div class="river river-main" aria-hidden="true"></div>
-              <div class="river river-branch" aria-hidden="true"></div>
-              <div id="overlay-layer"></div>
-              <div id="asset-layer"></div>
-              <div class="map-control-stack" aria-label="Map controls">
-                <button type="button" title="Reset view">Home</button>
-                <button type="button" title="Zoom in">+</button>
-                <button type="button" title="Zoom out">-</button>
-              </div>
-              <div class="legend">
-                <strong>Water depth (m)</strong>
-                <span><i class="depth-5"></i>&gt; 1.0</span>
-                <span><i class="depth-4"></i>0.5 - 1.0</span>
-                <span><i class="depth-3"></i>0.3 - 0.5</span>
-                <span><i class="depth-2"></i>0.1 - 0.3</span>
-                <span><i class="depth-1"></i>0 - 0.1</span>
-              </div>
-            </div>
-          </article>
+          <article class="panel map-panel" id="map-panel"></article>
 
           <aside class="right-stack">
-            <article class="panel" id="forecast">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">48-hour forecast</p>
-                  <h2>Flood risk curve</h2>
-                </div>
-              </div>
-              <div class="risk-chart" id="risk-chart"></div>
-              <div class="forecast-summary" id="forecast-summary"></div>
-            </article>
-
-            <article class="panel" id="mitigation">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Decision engine</p>
-                  <h2>AI recommended actions</h2>
-                </div>
-              </div>
-              <div id="recommendation-list" class="recommendation-list"></div>
-            </article>
-
-            <article class="panel" id="alerts">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Active alerts</p>
-                  <h2>Operational timeline</h2>
-                </div>
-              </div>
-              <div id="alert-list" class="alert-list"></div>
-            </article>
+            <article class="panel" id="forecast-panel"></article>
+            <article class="panel" id="recommendations-panel"></article>
+            <article class="panel" id="alerts-panel"></article>
           </aside>
         </section>
 
         <section class="bottom-grid">
-          <article class="panel" id="monitoring">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Sensor network</p>
-                <h2>Real-time sensor overview</h2>
-              </div>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Sensor type</th>
-                    <th>Status</th>
-                    <th>Location</th>
-                    <th>Value</th>
-                    <th>Trend</th>
-                  </tr>
-                </thead>
-                <tbody id="sensor-table"></tbody>
-              </table>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Predicted impact</p>
-                <h2>Affected areas</h2>
-              </div>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Area</th>
-                    <th>Est. depth</th>
-                    <th>Risk</th>
-                    <th>ETA</th>
-                  </tr>
-                </thead>
-                <tbody id="affected-table"></tbody>
-              </table>
-            </div>
-          </article>
-
-          <article class="panel" id="api">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Platform health</p>
-                <h2>System & API status</h2>
-              </div>
-            </div>
-            <div id="system-panel" class="system-panel"></div>
-            <div class="api-list">
-              <code>GET /api/flood/current</code>
-              <code>GET /api/flood/forecast</code>
-              <code>GET /api/flood/digital-twin</code>
-              <code>GET /api/flood/recommendations</code>
-            </div>
-          </article>
+          <article class="panel" id="sensor-panel"></article>
+          <article class="panel" id="affected-panel"></article>
+          <article class="panel" id="status-panel"></article>
         </section>
       </main>
     </div>
 
-    <script type="module" src="/app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="/src/app.js"></script>
   </body>
 </html>

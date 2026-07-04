@@ -4,6 +4,7 @@
   "description": "FIaaS MVP flood decision intelligence demo platform",
   "type": "module",
   "scripts": {
+    "dev": "node src/server.js",
     "start": "node src/server.js",
     "test": "node --test"
   }
