@@ -2,7 +2,7 @@ export function renderTopbar(current, alertCount) {
   return `
     <div class="title-block">
       <p class="eyebrow">Flood Intelligence as a Service</p>
-      <h1>Taman Sri Muda Command View</h1>
+      <h1>Taman Sri Muda Pilot Command View</h1>
     </div>
     <div class="topbar-actions">
       <label class="location-select">

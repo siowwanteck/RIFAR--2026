@@ -1,47 +1,50 @@
 export function buildRecommendations(state) {
-  const ps2Confirmed = state.confirmedActions.includes("act-ps2");
-  const ps3Confirmed = state.confirmedActions.includes("prep-ps3");
-  const gateConfirmed = state.confirmedActions.includes("gate-tg2");
+  const pumpConfirmed = state.confirmedActions.includes("act-pump-outflow");
+  const standbyConfirmed = state.confirmedActions.includes("prep-standby-pump");
+  const gateConfirmed = state.confirmedActions.includes("close-tidal-gate");
+  const downstreamSafe = !state.infrastructure.tidalGates.outlet.open || state.hydrology.backflowRiskPercent < 58;
 
   return [
     {
-      id: "act-ps2",
-      title: "Activate Pump PS2",
+      id: "act-pump-outflow",
+      title: "Activate Outflow Pump Station",
       reason: state.hydrology.tankCapacityPercent >= 78
-        ? "Tank capacity is approaching the warning threshold."
-        : "Predicted tank capacity may exceed 80% if rainfall continues.",
+        ? "The 4000 m³ attenuation tank is approaching the warning threshold."
+        : "Store runoff first, then pump when downstream river conditions are safe.",
       priority: state.risk.score >= 80 ? "CRITICAL" : "HIGH",
-      asset: "Pump Station PS2",
-      expectedImpact: "Lower main drain pressure over the next simulation cycles.",
-      status: ps2Confirmed ? "confirmed" : "pending",
+      asset: "Outflow Pump Station",
+      expectedImpact: downstreamSafe
+        ? "Gradually lowers tank pressure and predicted road depth."
+        : "Hold until tidal gate closure or river level reduction makes the outlet safe.",
+      status: pumpConfirmed ? "confirmed" : "pending",
       requiresConfirmation: true,
     },
     {
-      id: "prep-ps3",
-      title: "Prepare Pump PS3",
-      reason: "Keep standby capacity ready if PS2 cannot absorb the inflow.",
+      id: "prep-standby-pump",
+      title: "Prepare Standby Pump Capacity",
+      reason: "Keep spare discharge capacity ready if Jalan Nyaman and the field zone keep receiving runoff.",
       priority: state.weather.rainIntensity >= 26 ? "HIGH" : "MEDIUM",
-      asset: "Pump Station PS3",
+      asset: "Outflow Pump Station",
       expectedImpact: "Improves response time if water level keeps rising.",
-      status: ps3Confirmed ? "confirmed" : "pending",
+      status: standbyConfirmed ? "confirmed" : "pending",
       requiresConfirmation: true,
     },
     {
-      id: "gate-tg2",
-      title: "Close Tidal Gate TG2 if needed",
-      reason: "Tide level can create backflow risk at the river edge.",
+      id: "close-tidal-gate",
+      title: "Close Tidal / Box Culvert Gate",
+      reason: "High Klang River level or tide can push back through the lower-left outlet.",
       priority: state.weather.tideLevelM >= 1.32 ? "HIGH" : "MEDIUM",
-      asset: "Tidal Gate TG2",
-      expectedImpact: "Reduces backflow risk for low-lying roads.",
+      asset: "Tidal / Box Culvert Gate",
+      expectedImpact: "Reduces river backflow risk before releasing stored runoff.",
       status: gateConfirmed ? "confirmed" : "pending",
       requiresConfirmation: true,
     },
     {
       id: "watch-lowlands",
-      title: "Monitor Low-Lying Area",
-      reason: "Seksyen 25 and Seksyen 26 remain the first likely affected areas.",
+      title: "Monitor Pilot-Site Low Points",
+      reason: "Jalan Teladan 25/22, Jalan Nyaman 25/20, and the field zone remain the first likely affected areas.",
       priority: state.risk.level === "LOW" ? "LOW" : "MEDIUM",
-      asset: "Taman Sri Muda Seksyen 25-26",
+      asset: "Jalan Teladan / Jalan Nyaman pilot drains",
       expectedImpact: "Supports early community alert decisions.",
       status: "watching",
       requiresConfirmation: false,

@@ -14,6 +14,7 @@ import { createLiveSimulation } from "./hooks/useLiveSimulation.js";
 let map;
 let simulation;
 let mapMode = "2d";
+let mapLayerVisibility = { showFloodAreas: true };
 
 function qs(selector) {
   return document.querySelector(selector);
@@ -32,9 +33,9 @@ function render(state, selectedScenarioKey) {
   setClock();
 
   if (!map) {
-    qs("#map-panel").innerHTML = renderMapPanel(state, selectedScenarioKey, mapMode);
+    qs("#map-panel").innerHTML = renderMapPanel(state, selectedScenarioKey, mapMode, mapLayerVisibility);
     map = new LeafletDigitalTwin("digital-twin-map");
-    map.mount(state.digitalTwin, mapMode);
+    map.mount(state.digitalTwin, mapMode, mapLayerVisibility);
   } else {
     qs("#timeline-buttons").innerHTML = renderTimelineButtons(state.forecast.timeline, selectedScenarioKey);
     qs(".scenario-chip").textContent = scenarioChipText(state);
@@ -42,8 +43,12 @@ function render(state, selectedScenarioKey) {
     document.querySelectorAll("[data-map-mode]").forEach((button) => {
       button.classList.toggle("active", button.dataset.mapMode === mapMode);
     });
-    map.switchMode(mapMode, state.digitalTwin);
-    map.update(state.digitalTwin);
+    const floodAreaButton = qs('[data-map-layer="flood-areas"]');
+    if (floodAreaButton) {
+      floodAreaButton.classList.toggle("active", mapLayerVisibility.showFloodAreas);
+    }
+    map.switchMode(mapMode, state.digitalTwin, mapLayerVisibility);
+    map.update(state.digitalTwin, mapLayerVisibility);
   }
   window.lucide?.createIcons?.();
 }
@@ -68,6 +73,16 @@ document.addEventListener("click", (event) => {
   const mapModeButton = event.target.closest("[data-map-mode]");
   if (mapModeButton) {
     mapMode = mapModeButton.dataset.mapMode;
+    simulation.refresh();
+    return;
+  }
+
+  const mapLayerButton = event.target.closest("[data-map-layer]");
+  if (mapLayerButton?.dataset.mapLayer === "flood-areas") {
+    mapLayerVisibility = {
+      ...mapLayerVisibility,
+      showFloodAreas: !mapLayerVisibility.showFloodAreas,
+    };
     simulation.refresh();
     return;
   }

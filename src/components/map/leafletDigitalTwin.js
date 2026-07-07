@@ -1,13 +1,6 @@
 import { riskClass } from "../../utils/formatters.js";
 import { mapLibre3dConfig } from "../../data/mapConfig.js";
 
-const riskColors = {
-  LOW: "#24d17e",
-  MEDIUM: "#f2a93b",
-  HIGH: "#ff5a50",
-  CRITICAL: "#8257ff",
-};
-
 export class LeafletDigitalTwin {
   constructor(containerId) {
     this.containerId = containerId;
@@ -19,13 +12,13 @@ export class LeafletDigitalTwin {
     this.pendingLayers = null;
   }
 
-  mount(layers, mode = "2d") {
-    this.switchMode(mode, layers);
+  mount(layers, mode = "2d", mapLayerVisibility = { showFloodAreas: true }) {
+    this.switchMode(mode, layers, mapLayerVisibility);
   }
 
-  switchMode(mode, layers) {
+  switchMode(mode, layers, mapLayerVisibility = { showFloodAreas: true }) {
     if (this.mode === mode && (this.leafletMap || this.maplibreMap)) {
-      this.update(layers);
+      this.update(layers, mapLayerVisibility);
       return;
     }
 
@@ -33,13 +26,13 @@ export class LeafletDigitalTwin {
     this.mode = mode;
 
     if (mode === "3d") {
-      this.mountMapLibre(layers);
+      this.mountMapLibre(layers, mapLayerVisibility);
     } else {
-      this.mountLeaflet(layers);
+      this.mountLeaflet(layers, mapLayerVisibility);
     }
   }
 
-  mountLeaflet(layers) {
+  mountLeaflet(layers, mapLayerVisibility = { showFloodAreas: true }) {
     const container = resetContainer(this.containerId, "leaflet-map");
     if (!window.L) {
       container.innerHTML = "<div class='map-unavailable'>Leaflet unavailable. Check map library loading.</div>";
@@ -49,7 +42,7 @@ export class LeafletDigitalTwin {
     this.leafletMap = window.L.map(container, {
       zoomControl: false,
       attributionControl: false,
-    }).setView([layers.mapCenter.lat, layers.mapCenter.lng], 14);
+    }).setView([layers.mapCenter.lat, layers.mapCenter.lng], 16.5);
 
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -59,17 +52,17 @@ export class LeafletDigitalTwin {
     window.L.control.zoom({ position: "bottomright" }).addTo(this.leafletMap);
     this.markerLayer = window.L.layerGroup().addTo(this.leafletMap);
     this.overlayLayer = window.L.layerGroup().addTo(this.leafletMap);
-    this.update(layers);
+    this.update(layers, mapLayerVisibility);
   }
 
-  mountMapLibre(layers) {
+  mountMapLibre(layers, mapLayerVisibility = { showFloodAreas: true }) {
     const container = resetContainer(this.containerId, "maplibre-map");
     if (!window.maplibregl) {
       container.innerHTML = "<div class='map-unavailable'>MapLibre unavailable. Check local dependency loading.</div>";
       return;
     }
 
-    this.pendingLayers = layers;
+    this.pendingLayers = getMapRenderState(layers, mapLayerVisibility);
     this.maplibreMap = new window.maplibregl.Map({
       container,
       style: mapLibre3dConfig.styleUrl,
@@ -83,16 +76,16 @@ export class LeafletDigitalTwin {
     this.maplibreMap.addControl(new window.maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
     this.maplibreMap.on("load", () => {
       addBuildingExtrusions(this.maplibreMap);
-      this.update(this.pendingLayers);
+      this.update(this.pendingLayers, mapLayerVisibility);
     });
   }
 
-  update(layers) {
-    this.pendingLayers = layers;
+  update(layers, mapLayerVisibility = { showFloodAreas: true }) {
+    this.pendingLayers = getMapRenderState(layers, mapLayerVisibility);
     if (this.mode === "3d") {
-      this.updateMapLibre(layers);
+      this.updateMapLibre(this.pendingLayers, mapLayerVisibility);
     } else {
-      this.updateLeaflet(layers);
+      this.updateLeaflet(this.pendingLayers);
     }
   }
 
@@ -102,18 +95,38 @@ export class LeafletDigitalTwin {
     this.markerLayer.clearLayers();
     this.overlayLayer.clearLayers();
 
-    layers.floodOverlays.forEach((zone) => {
-      const color = riskColors[zone.riskLevel] ?? riskColors.MEDIUM;
-      const latLngs = zone.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
-      window.L.polygon(latLngs, {
-        stroke: true,
-        color,
-        weight: 1,
-        fillColor: color,
-        fillOpacity: zone.opacity,
+    layers.corridors?.forEach((corridor) => {
+      window.L.polyline(toLatLngs(corridor.coordinates), {
+        color: lineColor(corridor.type),
+        weight: corridor.type === "river" ? 9 : 5,
+        opacity: corridor.type === "river" ? 0.36 + corridor.intensity * 0.34 : 0.42,
       })
+        .bindTooltip(corridor.name, { permanent: false })
+        .addTo(this.overlayLayer);
+    });
+
+    layers.floodOverlays.forEach((zone) => {
+      const latLngs = zone.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
+      window.L.polygon(latLngs, leafletFloodStyle(zone, "glow"))
+        .addTo(this.overlayLayer);
+      window.L.polygon(latLngs, leafletFloodStyle(zone, "core"))
+        .addTo(this.overlayLayer);
+      window.L.polygon(latLngs, leafletFloodStyle(zone))
         .bindTooltip(`${zone.name}: ${zone.depthM.toFixed(2)} m`, { permanent: false })
         .addTo(this.overlayLayer);
+    });
+
+    layers.flowPaths?.forEach((path) => {
+      const latLngs = toLatLngs(path.coordinates);
+      window.L.polyline(latLngs, {
+        color: lineColor(path.type),
+        weight: 3,
+        opacity: 0.48 + path.intensity * 0.38,
+        dashArray: path.type === "backflow" ? "7 7" : "none",
+      })
+        .bindTooltip(path.name, { permanent: false })
+        .addTo(this.overlayLayer);
+      addArrowMarker(path, latLngs, this.overlayLayer);
     });
 
     layers.markers.forEach((marker) => {
@@ -125,10 +138,10 @@ export class LeafletDigitalTwin {
       });
 
       window.L.marker([marker.lat, marker.lng], { icon })
-        .bindTooltip(`<strong>${marker.name}</strong><br>${marker.value}`, {
-          direction: "top",
-          offset: [0, -12],
-          permanent: ["ps2", "tank-a", "tg1", "wl1"].includes(marker.id),
+        .bindTooltip(`<strong>${marker.name}</strong><br>${marker.value}${marker.tooltip ? `<br><small>${marker.tooltip}</small>` : ""}`, {
+          direction: marker.labelDirection ?? "top",
+          offset: marker.labelOffset ?? [0, -12],
+          permanent: ["pond-sensor", "tank-4000", "outflow-pump", "tidal-gate"].includes(marker.id),
         })
         .addTo(this.markerLayer);
     });
@@ -136,8 +149,9 @@ export class LeafletDigitalTwin {
     createLucideIcons();
   }
 
-  updateMapLibre(layers) {
+  updateMapLibre(layers, mapLayerVisibility = { showFloodAreas: true }) {
     if (!this.maplibreMap || !this.maplibreMap.loaded()) return;
+    const floodPaint = mapLibreFloodPaint();
 
     const floodData = {
       type: "FeatureCollection",
@@ -149,8 +163,8 @@ export class LeafletDigitalTwin {
           riskLevel: zone.riskLevel,
           depthM: zone.depthM,
           opacity: zone.opacity,
-          color: riskColors[zone.riskLevel] ?? riskColors.MEDIUM,
-          height: Math.max(2, zone.depthM * 18),
+          color: waterDepthColor(zone.depthM),
+          height: Math.max(0.8, round(zone.depthM * floodPaint.extrusionHeightMultiplier, 2)),
         },
         geometry: zone.geometry,
       })),
@@ -174,8 +188,46 @@ export class LeafletDigitalTwin {
       })),
     };
 
+    const corridorData = {
+      type: "FeatureCollection",
+      features: (layers.corridors ?? []).map((corridor) => lineFeature(corridor, {
+        color: lineColor(corridor.type),
+        width: corridor.type === "river" ? 8 : 4,
+        opacity: corridor.type === "river" ? 0.36 + corridor.intensity * 0.34 : 0.42,
+      })),
+    };
+
+    const flowData = {
+      type: "FeatureCollection",
+      features: (layers.flowPaths ?? []).map((path) => lineFeature(path, {
+        color: lineColor(path.type),
+        width: 3,
+        opacity: 0.48 + path.intensity * 0.38,
+        dash: path.type === "backflow" ? "dashed" : "solid",
+      })),
+    };
+
+    upsertGeoJsonSource(this.maplibreMap, "hydraulic-corridors", corridorData);
     upsertGeoJsonSource(this.maplibreMap, "flood-polygons", floodData);
+    upsertGeoJsonSource(this.maplibreMap, "flow-paths", flowData);
     upsertGeoJsonSource(this.maplibreMap, "asset-markers", markerData);
+
+    if (!this.maplibreMap.getLayer("hydraulic-corridors-line")) {
+      this.maplibreMap.addLayer({
+        id: "hydraulic-corridors-line",
+        type: "line",
+        source: "hydraulic-corridors",
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": ["get", "color"],
+          "line-width": ["get", "width"],
+          "line-opacity": ["get", "opacity"],
+        },
+      }, firstSymbolLayerId(this.maplibreMap));
+    }
 
     if (!this.maplibreMap.getLayer("flood-fill")) {
       this.maplibreMap.addLayer({
@@ -183,8 +235,65 @@ export class LeafletDigitalTwin {
         type: "fill",
         source: "flood-polygons",
         paint: {
-          "fill-color": ["get", "color"],
-          "fill-opacity": ["get", "opacity"],
+          "fill-color": floodPaint.fillColor,
+          "fill-opacity": floodPaint.fillOpacity,
+          "fill-outline-color": floodPaint.fillOutlineColor,
+        },
+      }, firstSymbolLayerId(this.maplibreMap));
+    }
+
+    if (!this.maplibreMap.getLayer("flood-outline")) {
+      this.maplibreMap.addLayer({
+        id: "flood-outline",
+        type: "line",
+        source: "flood-polygons",
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": "#94e5ff",
+          "line-width": 1.2,
+          "line-opacity": 0.34,
+          "line-blur": 1.8,
+        },
+      }, firstSymbolLayerId(this.maplibreMap));
+    }
+
+    if (!this.maplibreMap.getLayer("flow-path-lines")) {
+      this.maplibreMap.addLayer({
+        id: "flow-path-lines",
+        type: "line",
+        source: "flow-paths",
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": ["get", "color"],
+          "line-width": ["get", "width"],
+          "line-opacity": ["get", "opacity"],
+          "line-dasharray": ["case", ["==", ["get", "dash"], "dashed"], ["literal", [1.2, 1.2]], ["literal", [1, 0]]],
+        },
+      }, firstSymbolLayerId(this.maplibreMap));
+    }
+
+    if (!this.maplibreMap.getLayer("flow-path-arrows")) {
+      this.maplibreMap.addLayer({
+        id: "flow-path-arrows",
+        type: "symbol",
+        source: "flow-paths",
+        layout: {
+          "symbol-placement": "line",
+          "symbol-spacing": 88,
+          "text-field": "->",
+          "text-size": 18,
+          "text-keep-upright": false,
+        },
+        paint: {
+          "text-color": ["get", "color"],
+          "text-halo-color": "#06111c",
+          "text-halo-width": 1,
         },
       }, firstSymbolLayerId(this.maplibreMap));
     }
@@ -195,13 +304,17 @@ export class LeafletDigitalTwin {
         type: "fill-extrusion",
         source: "flood-polygons",
         paint: {
-          "fill-extrusion-color": ["get", "color"],
+          "fill-extrusion-color": floodPaint.extrusionColor,
           "fill-extrusion-height": ["get", "height"],
           "fill-extrusion-base": 0,
-          "fill-extrusion-opacity": 0.42,
+          "fill-extrusion-opacity": floodPaint.extrusionOpacity,
         },
       }, firstSymbolLayerId(this.maplibreMap));
     }
+
+    setLayerVisibility(this.maplibreMap, "flood-fill", floodLayerVisibility(mapLayerVisibility.showFloodAreas));
+    setLayerVisibility(this.maplibreMap, "flood-outline", floodLayerVisibility(mapLayerVisibility.showFloodAreas));
+    setLayerVisibility(this.maplibreMap, "flood-extrusion", floodLayerVisibility(mapLayerVisibility.showFloodAreas));
 
     if (!this.maplibreMap.getLayer("asset-circles")) {
       this.maplibreMap.addLayer({
@@ -259,6 +372,63 @@ export class LeafletDigitalTwin {
   }
 }
 
+export function getMapRenderState(layers, mapLayerVisibility = { showFloodAreas: true }) {
+  return {
+    ...layers,
+    floodOverlays: mapLayerVisibility.showFloodAreas ? layers.floodOverlays : [],
+  };
+}
+
+export function floodLayerVisibility(showFloodAreas) {
+  return showFloodAreas ? "visible" : "none";
+}
+
+export function leafletFloodStyle(zone, variant = "sheet") {
+  const fillColor = variant === "core" ? "#dff9ff" : waterDepthColor(zone.depthM);
+  const baseOpacity = Math.min(0.44, zone.opacity + 0.06);
+
+  if (variant === "glow") {
+    return {
+      stroke: false,
+      fillColor,
+      fillOpacity: Math.min(0.18, baseOpacity * 0.42),
+      fillRule: "evenodd",
+      className: "leaflet-flood-glow",
+      interactive: false,
+    };
+  }
+
+  if (variant === "core") {
+    return {
+      stroke: false,
+      fillColor,
+      fillOpacity: Math.min(0.11, baseOpacity * 0.28),
+      fillRule: "evenodd",
+      className: "leaflet-flood-core",
+      interactive: false,
+    };
+  }
+
+  return {
+    stroke: false,
+    fillColor,
+    fillOpacity: baseOpacity,
+    fillRule: "evenodd",
+    className: "leaflet-flood-sheet",
+  };
+}
+
+export function mapLibreFloodPaint() {
+  return {
+    fillColor: ["get", "color"],
+    fillOpacity: ["+", ["get", "opacity"], 0.05],
+    fillOutlineColor: "rgba(0,0,0,0)",
+    extrusionColor: ["get", "color"],
+    extrusionOpacity: 0.14,
+    extrusionHeightMultiplier: 6.5,
+  };
+}
+
 function upsertGeoJsonSource(map, sourceId, data) {
   const source = map.getSource(sourceId);
   if (source) {
@@ -266,6 +436,60 @@ function upsertGeoJsonSource(map, sourceId, data) {
     return;
   }
   map.addSource(sourceId, { type: "geojson", data });
+}
+
+function setLayerVisibility(map, layerId, visibility) {
+  if (!map.getLayer(layerId)) return;
+  map.setLayoutProperty(layerId, "visibility", visibility);
+}
+
+function round(value, digits) {
+  return Number(value.toFixed(digits));
+}
+
+function lineFeature(line, properties) {
+  return {
+    type: "Feature",
+    properties: {
+      id: line.id,
+      name: line.name,
+      type: line.type,
+      ...properties,
+    },
+    geometry: {
+      type: "LineString",
+      coordinates: line.coordinates,
+    },
+  };
+}
+
+function toLatLngs(coordinates) {
+  return coordinates.map(([lng, lat]) => [lat, lng]);
+}
+
+function addArrowMarker(path, latLngs, layer) {
+  const middle = latLngs[Math.floor(latLngs.length / 2)];
+  const icon = window.L.divIcon({
+    className: `flow-arrow ${path.type}`,
+    html: "->",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+  window.L.marker(middle, { icon, interactive: false }).addTo(layer);
+}
+
+function lineColor(type) {
+  if (type === "river" || type === "backflow") return "#6dd7ff";
+  if (type === "road") return "#f2d06b";
+  return "#28d17c";
+}
+
+function waterDepthColor(depthM) {
+  if (depthM > 2.6) return "#7c4dff";
+  if (depthM > 1.6) return "#3157d8";
+  if (depthM > 0.8) return "#168fff";
+  if (depthM > 0.25) return "#20bce8";
+  return "#9bdff0";
 }
 
 function addBuildingExtrusions(map) {
@@ -325,7 +549,8 @@ function markerIcon(type) {
   if (type === "tank") return "gauge";
   if (type === "gate") return "git-branch";
   if (type === "sensor") return "radio-tower";
-  if (type === "drain") return "waves";
+  if (type === "drain" || type === "river") return "waves";
+  if (type === "bioswale") return "leaf";
   return "map-pin";
 }
 

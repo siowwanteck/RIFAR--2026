@@ -18,16 +18,18 @@ export function createInitialState() {
       waterLevelM: 2.35,
       previousWaterLevelM: 2.07,
       tankCapacityPercent: 62,
+      tankPressurePercent: 58,
       drainLevelM: 1.42,
+      predictedDepthM: 0.72,
+      backflowRiskPercent: 42,
     },
     infrastructure: {
       pumps: {
-        ps2: { active: false, ready: true, flowM3s: 0.42 },
-        ps3: { active: false, ready: true, flowM3s: 0.34 },
+        outflow: { active: false, ready: true, flowM3s: 0.42 },
+        standby: { active: false, ready: true, flowM3s: 0.34 },
       },
       tidalGates: {
-        tg1: { open: true },
-        tg2: { open: true },
+        outlet: { open: true },
       },
     },
     risk: {
@@ -45,7 +47,7 @@ export function createInitialState() {
         id: "boot-risk",
         severity: "HIGH",
         title: "Heavy rain detected",
-        detail: "Rain Gauge RG1 reports rising intensity over Taman Sri Muda.",
+        detail: "Pilot Pond IoT Sensor reports rising rainfall near Jalan Teladan 25/22.",
         time: formatTime(now),
       },
     ],

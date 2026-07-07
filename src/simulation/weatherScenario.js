@@ -12,15 +12,17 @@ const forecastStops = [
 ];
 
 export function generateForecast48h(state) {
-  const pumpRelief = state.infrastructure.pumps.ps2.active ? 24 : 0;
+  const pumpRelief = state.infrastructure.pumps.outflow.active ? 24 : 0;
+  const gateRelief = state.infrastructure.tidalGates.outlet.open ? 0 : 12;
   const rainPressure = state.weather.rainIntensity * 0.92;
   const waterPressure = state.hydrology.waterLevelM * 15;
   const tankPressure = state.hydrology.tankCapacityPercent * 0.34;
+  const backflowPressure = state.hydrology.backflowRiskPercent * 0.18;
 
   const timeline = forecastStops.map((stop) => {
     const stormCurve = Math.sin((stop.hours + 3) / 8) * 10 + Math.min(stop.hours * 1.25, 18);
     const recovery = stop.hours > 24 ? (stop.hours - 24) * 0.9 : 0;
-    const score = clampScore(rainPressure + waterPressure + tankPressure + stormCurve - pumpRelief - recovery);
+    const score = clampScore(rainPressure + waterPressure + tankPressure + backflowPressure + stormCurve - pumpRelief - gateRelief - recovery);
     const depthM = Math.max(0.06, state.hydrology.waterLevelM - 2 + score / 190);
 
     return {

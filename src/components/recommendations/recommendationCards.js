@@ -1,6 +1,8 @@
 import { riskClass } from "../../utils/formatters.js";
 
 export function renderRecommendationCards(recommendations) {
+  const visibleRecommendations = recommendations.slice(0, 4);
+
   return `
     <div class="panel-header compact">
       <div>
@@ -9,13 +11,12 @@ export function renderRecommendationCards(recommendations) {
       </div>
     </div>
     <div class="recommendation-list">
-      ${recommendations.map((item) => `
+      ${visibleRecommendations.map((item) => `
         <article class="recommendation ${riskClass(item.priority)} ${item.status}">
           <div class="recommendation-icon"><i data-lucide="${iconFor(item.id)}"></i></div>
           <div class="recommendation-copy">
             <strong>${item.title}</strong>
             <span>${item.reason}</span>
-            <small>${item.expectedImpact}</small>
           </div>
           <div class="action-side">
             <b>${item.priority}</b>
@@ -26,12 +27,15 @@ export function renderRecommendationCards(recommendations) {
         </article>
       `).join("")}
     </div>
+    <button class="recommendation-footer" type="button">
+      View all actions <i data-lucide="arrow-right"></i>
+    </button>
   `;
 }
 
 function iconFor(id) {
-  if (id.includes("ps2")) return "power";
-  if (id.includes("ps3")) return "activity";
+  if (id.includes("pump")) return "power";
   if (id.includes("gate")) return "git-branch";
+  if (id.includes("lowlands")) return "map";
   return "map-pinned";
 }

@@ -10,7 +10,7 @@ import { mapLibre3dConfig } from "../src/data/mapConfig.js";
 test("heavy rain increases water level, tank capacity, risk, and affected area", () => {
   const state = createInitialState();
   state.weather.rainIntensity = 32;
-  state.infrastructure.pumps.ps2.active = false;
+  state.infrastructure.pumps.outflow.active = false;
 
   const next = advanceSimulation(state, 4);
 
@@ -22,13 +22,13 @@ test("heavy rain increases water level, tank capacity, risk, and affected area",
 
 test("confirmed pump activation reduces water pressure and records timeline entry", () => {
   const state = createInitialState();
-  const confirmed = advanceSimulation(state, 2, { confirmedActionId: "act-ps2" });
+  const confirmed = advanceSimulation(state, 2, { confirmedActionId: "act-pump-outflow" });
   const later = advanceSimulation(confirmed, 8);
 
-  assert.equal(confirmed.infrastructure.pumps.ps2.active, true);
+  assert.equal(confirmed.infrastructure.pumps.outflow.active, true);
   assert.ok(later.hydrology.waterLevelM < confirmed.hydrology.waterLevelM + 0.05);
-  assert.equal(confirmed.recommendations.find((item) => item.id === "act-ps2").status, "confirmed");
-  assert.match(confirmed.alerts[0].title, /Pump PS2/);
+  assert.equal(confirmed.recommendations.find((item) => item.id === "act-pump-outflow").status, "confirmed");
+  assert.match(confirmed.alerts[0].title, /Outflow Pump Station/);
 });
 
 test("48-hour forecast responds to current risk and pump state", () => {
@@ -36,7 +36,7 @@ test("48-hour forecast responds to current risk and pump state", () => {
   state.weather.rainIntensity = 36;
   const highForecast = generateForecast48h(state);
 
-  state.infrastructure.pumps.ps2.active = true;
+  state.infrastructure.pumps.outflow.active = true;
   state.hydrology.waterLevelM -= 0.35;
   const mitigatedForecast = generateForecast48h(state);
 
@@ -50,10 +50,83 @@ test("digital twin layers use real Taman Sri Muda coordinates and scale overlays
   const now = getDigitalTwinLayers(state, "NOW");
   const dayAhead = getDigitalTwinLayers(state, "24H");
 
-  assert.deepEqual(now.mapCenter, { lat: 3.0289, lng: 101.5417 });
-  assert.ok(now.markers.some((marker) => marker.name === "Pump Station PS2"));
-  assert.ok(now.markers.some((marker) => marker.name === "Rain Gauge RG1"));
+  assert.deepEqual(now.mapCenter, { lat: 3.032111111111111, lng: 101.52705555555555 });
+  assert.ok(now.markers.some((marker) => marker.name === "Outflow Pump Station"));
+  assert.ok(now.markers.some((marker) => marker.name === "Pilot Pond IoT Sensor"));
   assert.ok(dayAhead.floodOverlays[0].intensity > now.floodOverlays[0].intensity);
+});
+
+test("digital twin assets move together to the requested target center", () => {
+  const layers = getDigitalTwinLayers(createInitialState(), "NOW");
+  const pondSensor = layers.markers.find((marker) => marker.id === "pond-sensor");
+  const tankZone = layers.floodOverlays.find((overlay) => overlay.id === "field-tank-zone");
+
+  assert.deepEqual(layers.mapCenter, { lat: 3.032111111111111, lng: 101.52705555555555 });
+  assert.deepEqual({ lat: pondSensor.lat, lng: pondSensor.lng }, { lat: 3.0301, lng: 101.5396 });
+  assert.deepEqual({ lat: tankZone.lat, lng: tankZone.lng }, { lat: 3.028111, lng: 101.526356 });
+});
+
+test("flood overlays shrink and lighten after the visual tuning pass", () => {
+  const layers = getDigitalTwinLayers(createInitialState(), "NOW");
+  const jalanTeladan = layers.floodOverlays.find((overlay) => overlay.id === "jalan-teladan");
+  const width = Math.max(...jalanTeladan.geometry.coordinates[0].map(([lng]) => lng))
+    - Math.min(...jalanTeladan.geometry.coordinates[0].map(([lng]) => lng));
+
+  assert.ok(width < 0.0035);
+  assert.ok(jalanTeladan.opacity < 0.35);
+});
+
+test("digital twin focuses on the Jalan Teladan pilot assets and hydraulic paths", () => {
+  const layers = getDigitalTwinLayers(createInitialState(), "NOW");
+  const markerNames = layers.markers.map((marker) => marker.name);
+  const overlayNames = layers.floodOverlays.map((overlay) => overlay.name);
+
+  assert.ok(markerNames.includes("4000 m³ Underground Attenuation Tank"));
+  assert.ok(markerNames.includes("Tidal / Box Culvert Gate"));
+  assert.ok(markerNames.includes("Bioswale / Green Drainage Strip"));
+  assert.ok(overlayNames.includes("Jalan Teladan 25/22"));
+  assert.ok(overlayNames.includes("Jalan Nyaman 25/20"));
+  assert.ok(overlayNames.includes("Jalan Bakti 25/15"));
+  assert.ok(overlayNames.includes("Existing field / attenuation tank zone"));
+  assert.ok(layers.corridors.some((corridor) => corridor.name === "Klang River downstream corridor"));
+  assert.ok(layers.flowPaths.some((path) => path.id === "residential-runoff"));
+  assert.ok(layers.flowPaths.some((path) => path.id === "river-backflow-risk"));
+  assert.ok(!markerNames.some((name) => /Seksyen|PS2|PS3|TG2/.test(name)));
+});
+
+test("affected areas table uses pilot-site roads and drainage assets", async () => {
+  const { getAffectedAreas } = await import("../src/services/mockApi.js");
+  const areaNames = getAffectedAreas().map((area) => area.area);
+
+  assert.deepEqual(areaNames, [
+    "Jalan Teladan 25/22",
+    "Jalan Nyaman 25/20",
+    "Jalan Bakti 25/15",
+    "Existing field / attenuation tank zone",
+    "Tidal gate outlet",
+    "Klang River edge",
+  ]);
+});
+
+test("pump release and tidal gate closure reduce tank pressure and backflow risk", () => {
+  const state = createInitialState();
+  state.weather.rainIntensity = 34;
+  state.weather.riverLevelM = 2.1;
+  state.weather.tideLevelM = 1.8;
+  state.hydrology.tankCapacityPercent = 86;
+
+  const before = advanceSimulation(state, 4);
+  const pumpConfirmed = advanceSimulation(before, 2, { confirmedActionId: "act-pump-outflow" });
+  const gateClosed = advanceSimulation(pumpConfirmed, 2, { confirmedActionId: "close-tidal-gate" });
+  const later = advanceSimulation(gateClosed, 8);
+
+  assert.equal(gateClosed.infrastructure.pumps.outflow.active, true);
+  assert.equal(gateClosed.infrastructure.tidalGates.outlet.open, false);
+  assert.ok(later.hydrology.tankCapacityPercent < before.hydrology.tankCapacityPercent);
+  assert.ok(later.hydrology.tankPressurePercent < before.hydrology.tankPressurePercent);
+  assert.ok(later.hydrology.predictedDepthM < before.hydrology.predictedDepthM);
+  assert.ok(later.hydrology.backflowRiskPercent < before.hydrology.backflowRiskPercent);
+  assert.ok(later.hydrology.waterLevelM < before.hydrology.waterLevelM + 0.1);
 });
 
 test("digital twin overlays are irregular flood polygons, not circles", () => {
@@ -92,8 +165,8 @@ test("system status is data-platform focused and does not expose API endpoint ro
 test("3D digital twin uses an open vector city style and building extrusion config", () => {
   assert.equal(mapLibre3dConfig.styleUrl, "https://tiles.openfreemap.org/styles/liberty");
   assert.notEqual(mapLibre3dConfig.styleUrl, "https://demotiles.maplibre.org/style.json");
-  assert.equal(mapLibre3dConfig.camera.pitch, 62);
-  assert.equal(mapLibre3dConfig.camera.bearing, -22);
+  assert.equal(mapLibre3dConfig.camera.pitch, 50);
+  assert.equal(mapLibre3dConfig.camera.bearing, -15);
   assert.ok(mapLibre3dConfig.buildingLayers.length >= 1);
   assert.ok(mapLibre3dConfig.buildingLayers.every((layer) => layer.type === "fill-extrusion"));
 });

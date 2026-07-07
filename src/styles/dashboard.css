@@ -357,7 +357,7 @@ select {
 .operations-grid {
   display: grid;
   grid-template-columns: minmax(720px, 1fr) 420px;
-  align-items: start;
+  align-items: stretch;
   gap: 12px;
 }
 
@@ -383,7 +383,8 @@ select {
 
 .map-panel {
   display: grid;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
 }
 
 .panel-header {
@@ -437,11 +438,12 @@ select {
 
 .map-shell {
   position: relative;
-  height: clamp(428px, calc(100vh - 326px), 540px);
+  height: 100%;
+  min-height: clamp(428px, calc(100vh - 326px), 540px);
   overflow: hidden;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: #0a1724;
+  background: #06121c;
 }
 
 .digital-twin-map,
@@ -453,11 +455,28 @@ select {
 }
 
 .maplibre-map {
-  filter: saturate(0.95) contrast(1.08) brightness(1);
+  filter: saturate(1.08) contrast(1.16) brightness(0.76);
 }
 
 .leaflet-tile-pane {
-  filter: hue-rotate(178deg) saturate(0.85) brightness(1);
+  filter: hue-rotate(176deg) saturate(0.9) contrast(1.06) brightness(0.84);
+}
+
+.leaflet-overlay-pane svg path {
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 7px rgba(109, 215, 255, 0.42));
+}
+
+.leaflet-overlay-pane .leaflet-flood-glow {
+  filter: blur(10px) drop-shadow(0 0 18px rgba(79, 191, 255, 0.42));
+}
+
+.leaflet-overlay-pane .leaflet-flood-sheet {
+  filter: blur(2px) drop-shadow(0 0 10px rgba(107, 208, 255, 0.28));
+}
+
+.leaflet-overlay-pane .leaflet-flood-core {
+  filter: blur(14px);
 }
 
 .map-shell::after {
@@ -467,8 +486,8 @@ select {
   pointer-events: none;
   content: "";
   background:
-    linear-gradient(180deg, rgba(4, 12, 20, 0.08), rgba(4, 12, 20, 0.38)),
-    radial-gradient(circle at 50% 50%, transparent 35%, rgba(0, 0, 0, 0.24));
+    linear-gradient(180deg, rgba(4, 12, 20, 0.02), rgba(4, 12, 20, 0.2)),
+    radial-gradient(circle at 50% 50%, transparent 42%, rgba(0, 0, 0, 0.22));
 }
 
 .map-legend,
@@ -553,6 +572,24 @@ select {
 
 .fiass-marker.risk-high {
   color: var(--red);
+}
+
+.flow-arrow {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(3, 13, 22, 0.75);
+  border-radius: 50%;
+  color: var(--green);
+  background: rgba(3, 13, 22, 0.78);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.flow-arrow.backflow {
+  color: var(--cyan);
 }
 
 .leaflet-tooltip {
@@ -672,14 +709,14 @@ meter {
 .recommendation-list,
 .alert-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .recommendation {
   display: grid;
-  grid-template-columns: 34px 1fr 78px;
-  gap: 10px;
-  padding: 9px;
+  grid-template-columns: 30px 1fr 74px;
+  gap: 9px;
+  padding: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(3, 13, 22, 0.35);
@@ -688,8 +725,8 @@ meter {
 .recommendation-icon {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
 }
@@ -711,6 +748,13 @@ meter {
   font-size: 0.78rem;
 }
 
+.recommendation-copy span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .action-side {
   display: grid;
   gap: 7px;
@@ -719,9 +763,30 @@ meter {
 }
 
 .recommendation button,
-.ghost-button {
+.ghost-button,
+.recommendation-footer {
   padding: 7px 9px;
   background: rgba(22, 157, 255, 0.18);
+}
+
+.recommendation-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 8px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--cyan);
+  background: transparent;
+  font-size: 0.82rem;
+}
+
+.recommendation-footer svg {
+  width: 15px;
+  height: 15px;
 }
 
 .recommendation button:disabled {
@@ -749,7 +814,7 @@ table {
 
 th,
 td {
-  padding: 8px 9px;
+  padding: 7px 9px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   white-space: nowrap;

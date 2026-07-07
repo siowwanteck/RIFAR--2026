@@ -1,4 +1,4 @@
-import { affectedZones, mapMarkers, tamanSriMuda } from "../data/locations.js";
+import { affectedZones, hydraulicCorridors, hydraulicFlowPaths, mapMarkers, tamanSriMuda } from "../data/locations.js";
 import { createInitialState } from "../data/initialState.js";
 import { advanceSimulation } from "../simulation/floodModel.js";
 import { generateForecast48h } from "../simulation/weatherScenario.js";
@@ -31,20 +31,20 @@ export function getCurrentFloodStatus() {
     averageWaterLevelM: round(currentState.hydrology.waterLevelM, 2),
     waterLevelChangeM: round(currentState.hydrology.waterLevelM - currentState.hydrology.previousWaterLevelM, 2),
     tankCapacityPercent: currentState.hydrology.tankCapacityPercent,
-    pumpsActive: Number(currentState.infrastructure.pumps.ps2.active) + Number(currentState.infrastructure.pumps.ps3.active),
-    pumpsTotal: 3,
+    pumpsActive: Number(currentState.infrastructure.pumps.outflow.active) + Number(currentState.infrastructure.pumps.standby.active),
+    pumpsTotal: 2,
     affectedAreaHa: currentState.impact.affectedAreaHa,
   };
 }
 
 export function getSensorReadings() {
   return [
-    sensor("RG1", "Rain Gauge", "Taman Sri Muda", `${round(currentState.weather.rainIntensity, 1)} mm/hr`, "rising"),
-    sensor("WL1", "Water Level", "Main Drain", `${round(currentState.hydrology.waterLevelM, 2)} m`, currentState.risk.trend.toLowerCase()),
-    sensor("WL2", "Water Level", "Drain Sg. Rasau", `${round(currentState.hydrology.drainLevelM, 2)} m`, currentState.risk.trend.toLowerCase()),
-    sensor("TL1", "Tank Level", "Attenuation Tank A", `${currentState.hydrology.tankCapacityPercent}%`, tankTrend(currentState.hydrology.tankCapacityPercent)),
-    sensor("PS2", "Pump Station", "Pump House 2", currentState.infrastructure.pumps.ps2.active ? "Active" : "Standby", "operational"),
-    sensor("TG1", "Tidal Gate", "Sg. Rasau Gate 1", currentState.infrastructure.tidalGates.tg1.open ? "Open" : "Closed", "stable"),
+    sensor("IOT1", "Rain + Water Level", "Pilot Pond IoT Sensor", `${round(currentState.weather.rainIntensity, 1)} mm/hr`, "rising"),
+    sensor("WL1", "Water Level", "Jalan Teladan 25/22 drain", `${round(currentState.hydrology.waterLevelM, 2)} m`, currentState.risk.trend.toLowerCase()),
+    sensor("WL2", "Water Level", "Jalan Nyaman 25/20 drain", `${round(currentState.hydrology.drainLevelM, 2)} m`, currentState.risk.trend.toLowerCase()),
+    sensor("TL1", "Tank Level", "4000 m³ Underground Attenuation Tank", `${currentState.hydrology.tankCapacityPercent}%`, tankTrend(currentState.hydrology.tankCapacityPercent)),
+    sensor("PUMP", "Pump Station", "Outflow Pump Station", currentState.infrastructure.pumps.outflow.active ? "Active" : "Standby", "operational"),
+    sensor("GATE", "Tidal Gate", "Tidal gate outlet", currentState.infrastructure.tidalGates.outlet.open ? "Open" : "Closed", "stable"),
   ];
 }
 
@@ -67,8 +67,10 @@ export function getDigitalTwinLayers(state = currentState, scenarioKey = "NOW") 
       value: markerValue(marker.id, state),
     })),
     floodOverlays: affectedZones.map((zone) => buildFloodPolygon(zone, scenario, intensity)),
+    corridors: hydraulicCorridors.map((corridor) => buildCorridor(corridor, state)),
+    flowPaths: hydraulicFlowPaths.map((path) => buildFlowPath(path, state)),
     mapEngines: ["leaflet-2d", "maplibre-3d"],
-    layers: ["Water depth", "Sensor locations", "Pump stations", "Attenuation tanks", "Tidal gates", "Affected roads", "Safe routes"],
+    layers: ["Water depth", "Pilot sensors", "Outflow pump", "4000 m³ attenuation tank", "Tidal gate", "Klang River backflow", "Runoff arrows"],
   };
 }
 
@@ -160,7 +162,7 @@ function sensor(id, type, location, value, trend) {
 }
 
 function buildFloodPolygon(zone, scenario, intensity) {
-  const scale = 0.7 + intensity * zone.riskBias;
+  const scale = 0.46 + intensity * zone.riskBias * 0.32;
   const coordinates = zone.shape.map(([lngOffset, latOffset]) => [
     round(zone.lng + lngOffset * scale, 6),
     round(zone.lat + latOffset * scale, 6),
@@ -175,7 +177,7 @@ function buildFloodPolygon(zone, scenario, intensity) {
     intensity: round(intensity * zone.riskBias, 3),
     depthM: round(Math.max(0.08, scenario.depthM * zone.riskBias), 2),
     riskLevel: scenario.riskLevel,
-    opacity: round(0.18 + intensity * 0.4, 2),
+    opacity: round(0.06 + intensity * 0.18, 2),
     geometry: {
       type: "Polygon",
       coordinates: [coordinates],
@@ -184,27 +186,50 @@ function buildFloodPolygon(zone, scenario, intensity) {
 }
 
 function markerStatus(id, state) {
-  if (id === "ps2") return state.infrastructure.pumps.ps2.active ? "ACTIVE" : "STANDBY";
-  if (id === "ps3") return state.infrastructure.pumps.ps3.active ? "ACTIVE" : "READY";
-  if (id === "tank-a") return state.hydrology.tankCapacityPercent >= 80 ? "WARNING" : "NORMAL";
-  if (id === "main-drain" || id === "wl1") return state.risk.level;
+  if (id === "outflow-pump") return state.infrastructure.pumps.outflow.active ? "ACTIVE" : "STANDBY";
+  if (id === "tank-4000") return state.hydrology.tankCapacityPercent >= 80 ? "WARNING" : "NORMAL";
+  if (id === "pond-sensor") return state.risk.level;
+  if (id === "tidal-gate") return state.infrastructure.tidalGates.outlet.open ? "OPERATIONAL" : "ACTIVE";
+  if (id === "klang-river-edge") return state.hydrology.backflowRiskPercent >= 65 ? "WARNING" : "NORMAL";
   return "OPERATIONAL";
 }
 
 function markerValue(id, state) {
-  if (id === "ps2") return state.infrastructure.pumps.ps2.active ? "Active" : "Standby";
-  if (id === "ps3") return state.infrastructure.pumps.ps3.ready ? "Ready" : "Offline";
-  if (id === "tank-a") return `${state.hydrology.tankCapacityPercent}%`;
-  if (id === "main-drain" || id === "wl1") return `${round(state.hydrology.waterLevelM, 2)} m`;
-  if (id === "rg1") return `${round(state.weather.rainIntensity, 1)} mm/hr`;
-  if (id === "tg1") return state.infrastructure.tidalGates.tg1.open ? "Open" : "Closed";
+  if (id === "outflow-pump") return state.infrastructure.pumps.outflow.active ? "Active" : "Standby";
+  if (id === "tank-4000") return `${state.hydrology.tankCapacityPercent}% full`;
+  if (id === "pond-sensor") return `${round(state.weather.rainIntensity, 1)} mm/hr, ${round(state.hydrology.waterLevelM, 2)} m`;
+  if (id === "tidal-gate") return state.infrastructure.tidalGates.outlet.open ? "Open" : "Closed";
+  if (id === "klang-river-edge") return `${state.hydrology.backflowRiskPercent}% backflow risk`;
+  if (id === "bioswale-field") return "Runoff capture";
   return "Watched";
+}
+
+function buildCorridor(corridor, state) {
+  return {
+    ...corridor,
+    intensity: corridor.type === "river" ? state.hydrology.backflowRiskPercent / 100 : 0.42,
+  };
+}
+
+function buildFlowPath(path, state) {
+  const backflowRisk = state.hydrology.backflowRiskPercent / 100;
+  const runoffIntensity = clamp((state.weather.rainIntensity / 42 + state.hydrology.waterLevelM / 4) / 2, 0.2, 1);
+
+  return {
+    ...path,
+    intensity: path.type === "backflow" ? backflowRisk : runoffIntensity,
+    direction: path.type === "backflow" ? "river-to-field" : "drains-to-river",
+  };
 }
 
 function tankTrend(value) {
   if (value >= 80) return "warning";
   if (value >= 60) return "rising";
   return "stable";
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function round(value, digits) {

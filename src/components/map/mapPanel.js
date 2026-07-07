@@ -1,14 +1,14 @@
-export function renderMapPanel(state, selectedScenarioKey, mapMode) {
+export function renderMapPanel(state, selectedScenarioKey, mapMode, mapLayerVisibility = { showFloodAreas: true }) {
   return `
     <div class="panel-header map-header">
       <div>
-        <p class="eyebrow">Digital Twin - Taman Sri Muda</p>
+        <p class="eyebrow">Digital Twin - Taman Sri Muda Pilot</p>
         <h2>Live map intelligence</h2>
       </div>
       <div class="map-mode-group">
         <button type="button" class="${mapMode === "2d" ? "active" : ""}" data-map-mode="2d">2D</button>
         <button type="button" class="${mapMode === "3d" ? "active" : ""}" data-map-mode="3d">3D</button>
-        <button type="button">Layer</button>
+        <button type="button" class="${mapLayerVisibility.showFloodAreas ? "active" : ""}" data-map-layer="flood-areas">Flood area</button>
       </div>
     </div>
     <div class="timeline" id="timeline-buttons">

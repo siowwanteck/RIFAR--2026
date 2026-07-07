@@ -323,15 +323,15 @@ Sensors
 
 ↓
 
-MQTT
+MQTT （AWS IoT Core）
 
 ↓
 
-Cloud Backend
+Cloud Backend (AWS EC2)
 
 ↓
 
-Time-Series Database
+Time-Series Database (AWS RDS)
 
 ↓
 
@@ -349,7 +349,7 @@ Digital Twin
 
 Dashboard
 
-↓
+↓ (AWS API Gateway)
 
 REST API
 ```
