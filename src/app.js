@@ -63,40 +63,46 @@ function setClock() {
   }).format(new Date());
 }
 
-document.addEventListener("click", (event) => {
-  const scenarioButton = event.target.closest("[data-scenario]");
-  if (scenarioButton) {
-    simulation.setScenario(scenarioButton.dataset.scenario);
-    return;
-  }
+export function bootstrapApp() {
+  document.addEventListener("click", (event) => {
+    const scenarioButton = event.target.closest("[data-scenario]");
+    if (scenarioButton) {
+      simulation.setScenario(scenarioButton.dataset.scenario);
+      return;
+    }
 
-  const mapModeButton = event.target.closest("[data-map-mode]");
-  if (mapModeButton) {
-    mapMode = mapModeButton.dataset.mapMode;
-    simulation.refresh();
-    return;
-  }
+    const mapModeButton = event.target.closest("[data-map-mode]");
+    if (mapModeButton) {
+      mapMode = mapModeButton.dataset.mapMode;
+      simulation.refresh();
+      return;
+    }
 
-  const mapLayerButton = event.target.closest("[data-map-layer]");
-  if (mapLayerButton?.dataset.mapLayer === "flood-areas") {
-    mapLayerVisibility = {
-      ...mapLayerVisibility,
-      showFloodAreas: !mapLayerVisibility.showFloodAreas,
-    };
-    simulation.refresh();
-    return;
-  }
+    const mapLayerButton = event.target.closest("[data-map-layer]");
+    if (mapLayerButton?.dataset.mapLayer === "flood-areas") {
+      mapLayerVisibility = {
+        ...mapLayerVisibility,
+        showFloodAreas: !mapLayerVisibility.showFloodAreas,
+      };
+      simulation.refresh();
+      return;
+    }
 
-  const confirmButton = event.target.closest("[data-confirm]");
-  if (confirmButton) {
-    simulation.confirm(confirmButton.dataset.confirm);
-  }
-});
+    const confirmButton = event.target.closest("[data-confirm]");
+    if (confirmButton) {
+      simulation.confirm(confirmButton.dataset.confirm);
+    }
+  });
 
-simulation = createLiveSimulation({
-  intervalMs: 3000,
-  onUpdate: render,
-});
+  simulation = createLiveSimulation({
+    intervalMs: 3000,
+    onUpdate: render,
+  });
 
-simulation.start();
-window.addEventListener("beforeunload", () => simulation.stop());
+  simulation.start();
+  window.addEventListener("beforeunload", () => simulation.stop());
+}
+
+if (typeof window !== "undefined" && typeof document !== "undefined") {
+  bootstrapApp();
+}

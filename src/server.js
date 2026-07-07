@@ -16,6 +16,7 @@ const contentTypes = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".ico": "image/x-icon",
   ".png": "image/png",
   ".svg": "image/svg+xml",
 };
@@ -62,7 +63,7 @@ async function serveStatic(pathname, response) {
   await serveFile(publicDir, pathname, response);
 }
 
-async function handleRequest(request, response) {
+export async function handleRequest(request, response) {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
 
   if (request.method === "OPTIONS") {
@@ -106,6 +107,10 @@ export function createFiassServer() {
       sendJson(response, 500, { error: error.message });
     });
   });
+}
+
+export default async function vercelHandler(request, response) {
+  await handleRequest(request, response);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

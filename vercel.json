@@ -1,0 +1,18 @@
+{
+  "functions": {
+    "api/index.js": {
+      "includeFiles": [
+        "public/**",
+        "src/**",
+        "node_modules/lucide/dist/**",
+        "node_modules/maplibre-gl/dist/**"
+      ]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ]
+}
