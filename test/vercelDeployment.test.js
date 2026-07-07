@@ -1,11 +1,19 @@
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
 
-const serverAppModule = await import("../src/app.js");
-const clientAppModule = await import("../src/client.js");
-const handlerModule = await import("../api/index.js");
+const rootIndexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const appSource = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const appModule = await import("../src/app.js");
 
-assert.equal(typeof serverAppModule.default, "function");
-assert.equal(typeof clientAppModule.bootstrapApp, "function");
-assert.equal(typeof handlerModule.default, "function");
+assert.match(rootIndexHtml, /<div id="app">/);
+assert.match(rootIndexHtml, /<script type="module" src="\/src\/app\.js"><\/script>/);
+assert.equal(typeof appModule.initApp, "function");
+assert.doesNotMatch(appSource, /from "\.\/server\.js"/);
+assert.doesNotMatch(rootIndexHtml, /\/node_modules\//);
+assert.equal(existsSync(new URL("../api/index.js", import.meta.url)), false);
+assert.equal(existsSync(new URL("../src/server.js", import.meta.url)), false);
+assert.equal(existsSync(new URL("../vercel.json", import.meta.url)), false);
+assert.deepEqual(Object.keys(packageJson.scripts), ["test"]);
 
-console.log("vercel deployment entrypoints are server-safe");
+console.log("vercel deployment is static and browser-safe");

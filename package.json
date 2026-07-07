@@ -4,9 +4,7 @@
   "description": "FIaaS MVP flood decision intelligence demo platform",
   "type": "module",
   "scripts": {
-    "dev": "node src/server.js",
-    "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node test/vercelDeployment.test.js && node test/simulation.test.js && node test/mapControls.test.js && node test/dashboardLayout.test.js"
   },
   "dependencies": {
     "lucide": "^1.23.0",
