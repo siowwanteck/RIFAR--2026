@@ -41,3 +41,15 @@ test("flood overlay styling emphasizes readable water corridors", () => {
   assert.match(dashboardCss, /\.leaflet-overlay-pane svg path/s);
   assert.match(dashboardCss, /stroke-width:\s*2px/);
 });
+
+test("dashboard uses responsive widths instead of forcing browser zoom", () => {
+  assert.doesNotMatch(dashboardCss, /body\s*{[^}]*min-width:\s*1360px/s);
+  assert.match(dashboardCss, /\.app-shell\s*{[^}]*grid-template-columns:\s*236px minmax\(0,\s*1fr\)/s);
+  assert.match(dashboardCss, /@media\s*\(max-width:\s*1440px\)/);
+  assert.match(dashboardCss, /@media\s*\(max-width:\s*1200px\)/);
+  assert.match(dashboardCss, /@media\s*\(max-width:\s*768px\)/);
+  assert.match(dashboardCss, /@media\s*\(max-width:\s*1440px\)\s*{[\s\S]*\.app-shell\s*{[\s\S]*grid-template-columns:\s*212px minmax\(0,\s*1fr\)/s);
+  assert.match(dashboardCss, /@media\s*\(max-width:\s*1440px\)\s*{[\s\S]*h1\s*{[\s\S]*font-size:\s*1\.3[0-9]rem/s);
+  assert.match(dashboardCss, /@media\s*\(max-width:\s*768px\)\s*{[\s\S]*\.kpi-row,\s*[\s\S]*grid-template-columns:\s*1fr/s);
+  assert.match(dashboardCss, /@media\s*\(max-width:\s*768px\)\s*{[\s\S]*\.system-panel\s*{[\s\S]*grid-template-columns:\s*1fr/s);
+});
