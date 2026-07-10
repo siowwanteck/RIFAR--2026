@@ -17,7 +17,7 @@ test("forecast panel reserves enough room for summary values", () => {
 test("map panel keeps a fixed map viewport when the operational timeline grows", () => {
   assert.match(dashboardCss, /\.operations-grid\s*{[^}]*align-items:\s*stretch/s);
   assert.match(dashboardCss, /\.map-panel\s*{[^}]*align-self:\s*start/s);
-  assert.match(dashboardCss, /\.map-shell\s*{[^}]*height:\s*clamp\(428px,\s*calc\(100vh - 326px\),\s*540px\)/s);
+  assert.match(dashboardCss, /\.map-shell\s*{[^}]*height:\s*clamp\(520px,\s*calc\(100vh - 250px\),\s*680px\)/s);
   assert.doesNotMatch(dashboardCss, /\.map-shell\s*{[^}]*height:\s*100%/s);
 });
 

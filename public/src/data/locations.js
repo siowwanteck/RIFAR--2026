@@ -65,7 +65,7 @@ export const mapMarkers = [
 ];
 
 export const affectedZones = [
-  shiftZone({
+  {
     id: "jalan-teladan",
     name: "Jalan Teladan 25/22",
     lat: 3.034389,
@@ -79,8 +79,8 @@ export const affectedZones = [
       [0.0013, 0.00055],
       [-0.0019, 0.00048],
     ],
-  }),
-  shiftZone({
+  },
+  {
     id: "jalan-nyaman",
     name: "Jalan Nyaman 25/20",
     lat: 3.0329,
@@ -94,8 +94,8 @@ export const affectedZones = [
       [0.0012, 0.00064],
       [-0.0020, 0.00048],
     ],
-  }),
-  shiftZone({
+  },
+  {
     id: "jalan-bakti",
     name: "Jalan Bakti 25/15",
     lat: 3.022,
@@ -109,7 +109,7 @@ export const affectedZones = [
       [-0.00065, 0.0021],
       [-0.0009, -0.0018],
     ],
-  }),
+  },
   {
     id: "field-tank-zone",
     name: "Existing attenuation tank zone",

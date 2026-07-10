@@ -9,12 +9,12 @@ export function createLiveSimulation({ intervalMs = 3000, onUpdate }) {
   let selectedScenarioKey = "NOW";
   let timerId;
 
-  function emit(state = getDashboardState(selectedScenarioKey)) {
+  function emit(options = {}, state = getDashboardState(selectedScenarioKey, options)) {
     onUpdate(state, selectedScenarioKey);
   }
 
   function start() {
-    emit();
+    emit({ warmupSeconds: intervalMs / 1000 });
     timerId = window.setInterval(() => {
       stepSimulation(intervalMs / 1000);
       emit();

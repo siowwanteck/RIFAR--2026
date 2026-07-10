@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { renderMapPanel } from "../src/components/map/mapPanel.js";
 import {
+  getMapFitBounds,
   getMapRenderState,
   floodLayerVisibility,
   leafletFloodStyle,
@@ -48,4 +49,15 @@ test("flood overlays use soft water styling instead of hard polygon outlines", (
   assert.deepEqual(mapLibrePaint.fillOutlineColor, "rgba(0,0,0,0)");
   assert.ok(mapLibrePaint.extrusionOpacity < 0.3);
   assert.ok(mapLibrePaint.extrusionHeightMultiplier < 10);
+});
+
+test("map fit bounds cover markers and flood overlays for the pilot area", () => {
+  const layers = getDigitalTwinLayers(createInitialState(), "NOW");
+  const bounds = getMapFitBounds(layers);
+
+  assert.equal(bounds.length, 2);
+  assert.ok(bounds[0][0] < layers.mapCenter.lat);
+  assert.ok(bounds[1][0] > layers.mapCenter.lat);
+  assert.ok(bounds[0][1] < layers.mapCenter.lng);
+  assert.ok(bounds[1][1] > layers.mapCenter.lng);
 });

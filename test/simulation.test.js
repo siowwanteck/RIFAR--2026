@@ -6,6 +6,7 @@ import { advanceSimulation } from "../src/simulation/floodModel.js";
 import { buildRecommendations } from "../src/simulation/recommendationEngine.js";
 import { generateForecast48h } from "../src/simulation/weatherScenario.js";
 import {
+  getDashboardState,
   confirmRecommendedAction,
   getDigitalTwinLayers,
   getRecommendedActions,
@@ -59,6 +60,22 @@ test("issuing a flood alert appears in recommendations and adds an alert timelin
   assert.ok(confirmed.alerts.some((alert) => /Flood alert/i.test(alert.title)));
   assert.ok(
     confirmed.alerts.some((alert) => /Jalan Teladan|Jalan Nyaman|field/i.test(alert.detail)),
+  );
+});
+
+test("dashboard can surface a flood alert immediately after the first simulation warmup", () => {
+  resetSimulation();
+
+  const initial = getDashboardState();
+  const warmed = getDashboardState("NOW", { warmupSeconds: 3 });
+
+  assert.equal(
+    initial.recommendations.some((item) => item.id === "issue-flood-alert"),
+    false,
+  );
+  assert.equal(
+    warmed.recommendations.some((item) => item.id === "issue-flood-alert"),
+    true,
   );
 });
 

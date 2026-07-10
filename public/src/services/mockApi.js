@@ -150,7 +150,11 @@ export function undoRecommendedAction(actionId) {
   };
 }
 
-export function getDashboardState(scenarioKey = "NOW") {
+export function getDashboardState(scenarioKey = "NOW", options = {}) {
+  if (options.warmupSeconds && currentState.tick === 0) {
+    currentState = advanceSimulation(currentState, options.warmupSeconds);
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     current: getCurrentFloodStatus(),

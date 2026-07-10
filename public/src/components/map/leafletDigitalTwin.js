@@ -146,6 +146,7 @@ export class LeafletDigitalTwin {
         .addTo(this.markerLayer);
     });
 
+    fitLeafletToLayers(this.leafletMap, layers);
     createLucideIcons();
   }
 
@@ -349,9 +350,10 @@ export class LeafletDigitalTwin {
       });
     }
 
-    this.maplibreMap.easeTo({
-      center: [layers.mapCenter.lng, layers.mapCenter.lat],
-      zoom: mapLibre3dConfig.camera.zoom,
+    const bounds = getMapFitBounds(layers);
+    this.maplibreMap.fitBounds(toLngLatBounds(bounds), {
+      padding: { top: 52, right: 52, bottom: 52, left: 52 },
+      maxZoom: mapLibre3dConfig.camera.zoom,
       pitch: mapLibre3dConfig.camera.pitch,
       bearing: mapLibre3dConfig.camera.bearing,
       duration: 500,
@@ -377,6 +379,44 @@ export function getMapRenderState(layers, mapLayerVisibility = { showFloodAreas:
     ...layers,
     floodOverlays: mapLayerVisibility.showFloodAreas ? layers.floodOverlays : [],
   };
+}
+
+export function getMapFitBounds(layers) {
+  const coordinates = [];
+
+  if (Array.isArray(layers.bounds)) {
+    layers.bounds.forEach((point) => {
+      if (Array.isArray(point) && point.length === 2) {
+        coordinates.push(point);
+      }
+    });
+  }
+
+  (layers.markers ?? []).forEach((marker) => {
+    coordinates.push([marker.lat, marker.lng]);
+  });
+
+  (layers.floodOverlays ?? []).forEach((overlay) => {
+    overlay.geometry?.coordinates?.[0]?.forEach(([lng, lat]) => {
+      coordinates.push([lat, lng]);
+    });
+  });
+
+  if (!coordinates.length) {
+    const { lat, lng } = layers.mapCenter;
+    return [
+      [lat - 0.002, lng - 0.002],
+      [lat + 0.002, lng + 0.002],
+    ];
+  }
+
+  const latitudes = coordinates.map(([lat]) => lat);
+  const longitudes = coordinates.map(([, lng]) => lng);
+
+  return [
+    [Math.min(...latitudes), Math.min(...longitudes)],
+    [Math.max(...latitudes), Math.max(...longitudes)],
+  ];
 }
 
 export function floodLayerVisibility(showFloodAreas) {
@@ -465,6 +505,23 @@ function lineFeature(line, properties) {
 
 function toLatLngs(coordinates) {
   return coordinates.map(([lng, lat]) => [lat, lng]);
+}
+
+function toLngLatBounds(bounds) {
+  return [
+    [bounds[0][1], bounds[0][0]],
+    [bounds[1][1], bounds[1][0]],
+  ];
+}
+
+function fitLeafletToLayers(map, layers) {
+  const bounds = getMapFitBounds(layers);
+  map.fitBounds(bounds, {
+    padding: [38, 38],
+    maxZoom: 16.7,
+    animate: true,
+    duration: 0.5,
+  });
 }
 
 function addArrowMarker(path, latLngs, layer) {
