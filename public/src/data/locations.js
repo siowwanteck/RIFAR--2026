@@ -142,7 +142,6 @@ export const affectedZones = [
   }),
 ];
 
-
 function shiftZone(zone) {
   return {
     ...zone,
@@ -151,15 +150,6 @@ function shiftZone(zone) {
   };
 }
 
-function shiftLine(line) {
-  return {
-    ...line,
-    coordinates: line.coordinates.map(([lng, lat]) => [
-      round(lng + lngShift),
-      round(lat + latShift),
-    ]),
-  };
-}
 
 function shiftLatLng([lat, lng]) {
   return [round(lat + latShift), round(lng + lngShift)];

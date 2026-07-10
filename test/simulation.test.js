@@ -115,7 +115,7 @@ test("flood overlays shrink and lighten after the visual tuning pass", () => {
   assert.ok(jalanTeladan.opacity < 0.35);
 });
 
-test("digital twin focuses on the Jalan Teladan pilot assets and hydraulic paths", () => {
+test("digital twin focuses on the Jalan Teladan pilot assets even without hydraulic path overlays", () => {
   const layers = getDigitalTwinLayers(createInitialState(), "NOW");
   const markerNames = layers.markers.map((marker) => marker.name);
   const overlayNames = layers.floodOverlays.map((overlay) => overlay.name);
@@ -128,9 +128,8 @@ test("digital twin focuses on the Jalan Teladan pilot assets and hydraulic paths
   assert.ok(overlayNames.includes("Jalan Nyaman 25/20"));
   assert.ok(overlayNames.includes("Jalan Bakti 25/15"));
   assert.ok(overlayNames.includes("Existing attenuation tank zone"));
-  assert.ok(layers.corridors.some((corridor) => corridor.name === "Klang River downstream corridor"));
-  assert.ok(layers.flowPaths.some((path) => path.id === "residential-runoff"));
-  assert.ok(layers.flowPaths.some((path) => path.id === "river-backflow-risk"));
+  assert.deepEqual(layers.corridors, []);
+  assert.deepEqual(layers.flowPaths, []);
   assert.ok(!markerNames.some((name) => /Seksyen|PS2|PS3|TG2/.test(name)));
 });
 

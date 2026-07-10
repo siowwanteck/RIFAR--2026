@@ -1,10 +1,12 @@
-import { affectedZones, hydraulicCorridors, hydraulicFlowPaths, mapMarkers, tamanSriMuda } from "../data/locations.js";
+import { affectedZones, mapMarkers, tamanSriMuda } from "../data/locations.js";
 import { createInitialState } from "../data/initialState.js";
 import { advanceSimulation } from "../simulation/floodModel.js";
 import { generateForecast48h } from "../simulation/weatherScenario.js";
 
 let currentState = createInitialState();
 let undoableActionSnapshots = new Map();
+const hydraulicCorridors = [];
+const hydraulicFlowPaths = [];
 
 export function resetSimulation() {
   currentState = createInitialState();
@@ -72,7 +74,7 @@ export function getDigitalTwinLayers(state = currentState, scenarioKey = "NOW") 
     corridors: hydraulicCorridors.map((corridor) => buildCorridor(corridor, state)),
     flowPaths: hydraulicFlowPaths.map((path) => buildFlowPath(path, state)),
     mapEngines: ["leaflet-2d", "maplibre-3d"],
-    layers: ["Water depth", "Pilot sensors", "Outflow pump", "4000 m³ attenuation tank", "Tidal gate", "Klang River backflow", "Runoff arrows"],
+    layers: ["Water depth", "Pilot sensors", "Outflow pump", "4000 m³ attenuation tank", "Tidal gate"],
   };
 }
 

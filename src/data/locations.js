@@ -142,6 +142,13 @@ export const affectedZones = [
   }),
 ];
 
+function shiftZone(zone) {
+  return {
+    ...zone,
+    lat: round(zone.lat + latShift),
+    lng: round(zone.lng + lngShift),
+  };
+}
 
 
 function shiftLatLng([lat, lng]) {
