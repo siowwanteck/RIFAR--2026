@@ -26,7 +26,6 @@ export function createInitialState() {
     infrastructure: {
       pumps: {
         outflow: { active: false, ready: true, flowM3s: 0.42 },
-        standby: { active: false, ready: true, flowM3s: 0.34 },
       },
       tidalGates: {
         outlet: { open: true },

@@ -13,9 +13,7 @@ export function advanceSimulation(state, seconds = 3, event = {}) {
   const backflowPressure = Math.max(0, (next.weather.riverLevelM - 1.35) * 0.016 + (next.weather.tideLevelM - 1.1) * 0.012);
   const backflowInflow = gateClosed ? backflowPressure * 0.22 : backflowPressure;
   const downstreamSafe = gateClosed || backflowPressure < 0.012;
-  const pumpOutflow = downstreamSafe
-    ? (next.infrastructure.pumps.outflow.active ? 0.34 : 0) + (next.infrastructure.pumps.standby.active ? 0.07 : 0)
-    : 0;
+  const pumpOutflow = downstreamSafe && next.infrastructure.pumps.outflow.active ? 0.34 : 0;
   const inflow = next.weather.rainIntensity * 0.006 + backflowInflow;
   const previousWaterLevelM = next.hydrology.waterLevelM;
   const previousTankCapacity = next.hydrology.tankCapacityPercent;
@@ -84,17 +82,6 @@ function applyConfirmedAction(state, actionId) {
       severity: "LOW",
       title: "Outflow Pump Station activation confirmed",
       detail: "Operator confirmed controlled release from the 4000 m³ attenuation tank.",
-      time: formatTime(),
-    });
-  }
-
-  if (actionId === "prep-standby-pump") {
-    next.infrastructure.pumps.standby.ready = true;
-    next.alerts.unshift({
-      id: `confirm-${actionId}-${next.tick}`,
-      severity: "MEDIUM",
-      title: "Standby pump capacity prepared",
-      detail: "Additional outflow capacity is ready if residential runoff keeps rising.",
       time: formatTime(),
     });
   }

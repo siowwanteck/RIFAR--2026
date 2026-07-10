@@ -51,14 +51,14 @@ test("digital twin layers use real Taman Sri Muda coordinates and scale overlays
   const dayAhead = getDigitalTwinLayers(state, "24H");
 
   assert.deepEqual(now.mapCenter, { lat: 3.032111111111111, lng: 101.52705555555555 });
-  assert.ok(now.markers.some((marker) => marker.name === "Outflow Pump Station"));
-  assert.ok(now.markers.some((marker) => marker.name === "Pilot Pond IoT Sensor"));
+  assert.ok(now.markers.some((marker) => marker.name === "Pump Station"));
+  assert.ok(now.markers.some((marker) => marker.name === "IoT Sensor"));
   assert.ok(dayAhead.floodOverlays[0].intensity > now.floodOverlays[0].intensity);
 });
 
 test("digital twin assets move together to the requested target center", () => {
   const layers = getDigitalTwinLayers(createInitialState(), "NOW");
-  const pondSensor = layers.markers.find((marker) => marker.id === "pond-sensor");
+  const pondSensor = layers.markers.find((marker) => marker.id === "IoT sensor");
   const tankZone = layers.floodOverlays.find((overlay) => overlay.id === "field-tank-zone");
 
   assert.deepEqual(layers.mapCenter, { lat: 3.032111111111111, lng: 101.52705555555555 });
@@ -81,8 +81,9 @@ test("digital twin focuses on the Jalan Teladan pilot assets and hydraulic paths
   const markerNames = layers.markers.map((marker) => marker.name);
   const overlayNames = layers.floodOverlays.map((overlay) => overlay.name);
 
-  assert.ok(markerNames.includes("4000 m³ Underground Attenuation Tank"));
-  assert.ok(markerNames.includes("Tidal / Box Culvert Gate"));
+  assert.ok(markerNames.includes("Underground Attenuation Tank"));
+  assert.ok(markerNames.includes("Pump Station"));
+  assert.ok(markerNames.includes("Tidal Gate"));
   assert.ok(markerNames.includes("Bioswale / Green Drainage Strip"));
   assert.ok(overlayNames.includes("Jalan Teladan 25/22"));
   assert.ok(overlayNames.includes("Jalan Nyaman 25/20"));
@@ -104,7 +105,6 @@ test("affected areas table uses pilot-site roads and drainage assets", async () 
     "Jalan Bakti 25/15",
     "Existing field / attenuation tank zone",
     "Tidal gate outlet",
-    "Klang River edge",
   ]);
 });
 
@@ -145,6 +145,20 @@ test("forecast exposes compact chart stops for the command dashboard line chart"
   assert.deepEqual(
     forecast.chartTimeline.map((point) => point.label),
     ["NOW", "+3h", "+6h", "+12h", "+24h", "+48h"],
+  );
+});
+
+test("dashboard state models a single pump station without standby capacity", async () => {
+  const { getDashboardState } = await import("../src/services/mockApi.js");
+  const state = getDashboardState();
+  const pumpActions = state.recommendations.filter((item) => item.asset === "Outflow Pump Station");
+
+  assert.equal(state.current.pumpsTotal, 1);
+  assert.equal(state.current.pumpsActive <= state.current.pumpsTotal, true);
+  assert.equal(pumpActions.length, 1);
+  assert.equal(
+    state.recommendations.some((item) => item.id === "prep-standby-pump"),
+    false,
   );
 });
 

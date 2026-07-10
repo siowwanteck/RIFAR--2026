@@ -33,7 +33,7 @@ export function renderKpiCards(current) {
     {
       label: "Pump station",
       value: `${current.pumpsActive} / ${current.pumpsTotal}`,
-      detail: "Pumps active",
+      detail: "Pump active",
       tone: current.pumpsActive > 0 ? "risk-low" : "risk-medium",
       icon: "power",
     },

@@ -1,6 +1,5 @@
 export function buildRecommendations(state) {
   const pumpConfirmed = state.confirmedActions.includes("act-pump-outflow");
-  const standbyConfirmed = state.confirmedActions.includes("prep-standby-pump");
   const gateConfirmed = state.confirmedActions.includes("close-tidal-gate");
   const downstreamSafe = !state.infrastructure.tidalGates.outlet.open || state.hydrology.backflowRiskPercent < 58;
 
@@ -17,16 +16,6 @@ export function buildRecommendations(state) {
         ? "Gradually lowers tank pressure and predicted road depth."
         : "Hold until tidal gate closure or river level reduction makes the outlet safe.",
       status: pumpConfirmed ? "confirmed" : "pending",
-      requiresConfirmation: true,
-    },
-    {
-      id: "prep-standby-pump",
-      title: "Prepare Standby Pump Capacity",
-      reason: "Keep spare discharge capacity ready if Jalan Nyaman and the field zone keep receiving runoff.",
-      priority: state.weather.rainIntensity >= 26 ? "HIGH" : "MEDIUM",
-      asset: "Outflow Pump Station",
-      expectedImpact: "Improves response time if water level keeps rising.",
-      status: standbyConfirmed ? "confirmed" : "pending",
       requiresConfirmation: true,
     },
     {

@@ -31,8 +31,8 @@ export function getCurrentFloodStatus() {
     averageWaterLevelM: round(currentState.hydrology.waterLevelM, 2),
     waterLevelChangeM: round(currentState.hydrology.waterLevelM - currentState.hydrology.previousWaterLevelM, 2),
     tankCapacityPercent: currentState.hydrology.tankCapacityPercent,
-    pumpsActive: Number(currentState.infrastructure.pumps.outflow.active) + Number(currentState.infrastructure.pumps.standby.active),
-    pumpsTotal: 2,
+    pumpsActive: Number(currentState.infrastructure.pumps.outflow.active),
+    pumpsTotal: 1,
     affectedAreaHa: currentState.impact.affectedAreaHa,
   };
 }
