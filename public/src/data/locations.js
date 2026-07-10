@@ -98,8 +98,8 @@ export const affectedZones = [
   {
     id: "jalan-bakti",
     name: "Jalan Bakti 25/15",
-    lat: 3.022,
-    lng: 101.5348,
+    lat: 3.032439,
+    lng: 101.5261,
     riskBias: 1,
     shape: [
       [-0.00055, -0.0025],
@@ -127,9 +127,9 @@ export const affectedZones = [
   },
   shiftZone({
     id: "tidal-gate-outlet",
-    name: "Tidal gate outlet",
-    lat: 3.029803,
-    lng: 101.525822,
+    name: "Tidal gate zone",
+    lat: 3.030253,
+    lng: 101.527528,
     riskBias: 0.94,
     shape: [
       [-0.001, -0.0005],

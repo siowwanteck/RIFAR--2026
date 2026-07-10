@@ -75,3 +75,9 @@ test("map containers fill the card height and leaflets resize after layout chang
   assert.match(dashboardCss, /\.digital-twin-map,[\s\S]*\.leaflet-container\s*{[^}]*width:\s*100%[^}]*height:\s*100%/s);
   assert.match(mapSource, /this\.leafletMap\.invalidateSize\(/);
 });
+
+test("3d asset markers render with infrastructure icons instead of dark circle dots", () => {
+  assert.match(mapSource, /id:\s*"asset-icons"[\s\S]*type:\s*"symbol"/);
+  assert.match(mapSource, /"icon-image":\s*\["get",\s*"iconId"\]/);
+  assert.doesNotMatch(mapSource, /id:\s*"asset-circles"/);
+});

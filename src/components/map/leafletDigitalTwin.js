@@ -188,6 +188,7 @@ export class LeafletDigitalTwin {
           type: marker.type,
           status: marker.status,
           value: marker.value,
+          iconId: mapLibreMarkerIconId(marker),
         },
         geometry: {
           type: "Point",
@@ -219,6 +220,7 @@ export class LeafletDigitalTwin {
     upsertGeoJsonSource(this.maplibreMap, "flood-polygons", floodData);
     upsertGeoJsonSource(this.maplibreMap, "flow-paths", flowData);
     upsertGeoJsonSource(this.maplibreMap, "asset-markers", markerData);
+    ensureMapLibreMarkerIcons(this.maplibreMap, layers.markers);
 
     if (!this.maplibreMap.getLayer("hydraulic-corridors-line")) {
       this.maplibreMap.addLayer({
@@ -324,16 +326,16 @@ export class LeafletDigitalTwin {
     setLayerVisibility(this.maplibreMap, "flood-outline", floodLayerVisibility(mapLayerVisibility.showFloodAreas));
     setLayerVisibility(this.maplibreMap, "flood-extrusion", floodLayerVisibility(mapLayerVisibility.showFloodAreas));
 
-    if (!this.maplibreMap.getLayer("asset-circles")) {
+    if (!this.maplibreMap.getLayer("asset-icons")) {
       this.maplibreMap.addLayer({
-        id: "asset-circles",
-        type: "circle",
+        id: "asset-icons",
+        type: "symbol",
         source: "asset-markers",
-        paint: {
-          "circle-radius": 7,
-          "circle-color": "#06111c",
-          "circle-stroke-color": "#6dd7ff",
-          "circle-stroke-width": 2,
+        layout: {
+          "icon-image": ["get", "iconId"],
+          "icon-size": 1,
+          "icon-allow-overlap": true,
+          "icon-anchor": "center",
         },
       });
     }
@@ -346,7 +348,7 @@ export class LeafletDigitalTwin {
         layout: {
           "text-field": ["concat", ["get", "name"], "\n", ["get", "value"]],
           "text-size": 11,
-          "text-offset": [0, 1.3],
+          "text-offset": [0, 2.2],
           "text-anchor": "top",
         },
         paint: {
@@ -612,6 +614,104 @@ function markerIcon(type) {
   if (type === "drain" || type === "river") return "waves";
   if (type === "bioswale") return "leaf";
   return "map-pin";
+}
+
+function mapLibreMarkerIconId(marker) {
+  return `asset-${marker.type}-${markerTone(marker.status)}`;
+}
+
+function ensureMapLibreMarkerIcons(map, markers) {
+  const seen = new Set();
+
+  markers.forEach((marker) => {
+    const iconId = mapLibreMarkerIconId(marker);
+    if (seen.has(iconId) || map.hasImage(iconId)) return;
+    seen.add(iconId);
+    addMapLibreMarkerIcon(map, iconId, marker.type, markerTone(marker.status));
+  });
+}
+
+function addMapLibreMarkerIcon(map, iconId, type, tone) {
+  const image = new Image(40, 40);
+  image.onload = () => {
+    if (!map.hasImage(iconId)) {
+      map.addImage(iconId, image, { pixelRatio: 2 });
+    }
+  };
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(mapLibreMarkerSvg(type, tone))}`;
+}
+
+function markerTone(status) {
+  if (status === "ACTIVE" || status === "OPERATIONAL") return "green";
+  if (status === "WARNING" || status === "WATCH") return "orange";
+  if (status === "HIGH" || status === "CRITICAL" || status === "ALERT") return "red";
+  return "cyan";
+}
+
+function mapLibreMarkerSvg(type, tone) {
+  const accent = markerToneColor(tone);
+  const glyph = infrastructureGlyph(type);
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+      <defs>
+        <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="0" stdDeviation="2.4" flood-color="${accent}" flood-opacity="0.45"/>
+        </filter>
+      </defs>
+      <circle cx="20" cy="20" r="15.5" fill="#071521" stroke="${accent}" stroke-width="2.4" filter="url(#glow)"/>
+      <circle cx="20" cy="20" r="12.5" fill="rgba(11,31,46,0.94)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+      ${glyph.replaceAll("__ACCENT__", accent)}
+    </svg>
+  `.trim();
+}
+
+function markerToneColor(tone) {
+  if (tone === "green") return "#2bd67b";
+  if (tone === "orange") return "#ffb347";
+  if (tone === "red") return "#ff6b6b";
+  return "#6dd7ff";
+}
+
+function infrastructureGlyph(type) {
+  if (type === "pump") {
+    return `
+      <rect x="11" y="16" width="10" height="8" rx="2" fill="none" stroke="__ACCENT__" stroke-width="2"/>
+      <path d="M21 20h6.5a3.5 3.5 0 1 1 0 7H25" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <path d="M14 14v-2.5m4 2.5v-2.5" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+    `;
+  }
+  if (type === "tank") {
+    return `
+      <ellipse cx="20" cy="14.5" rx="7.5" ry="3.5" fill="none" stroke="__ACCENT__" stroke-width="2"/>
+      <path d="M12.5 14.5v10c0 2 3.4 3.5 7.5 3.5s7.5-1.5 7.5-3.5v-10" fill="none" stroke="__ACCENT__" stroke-width="2"/>
+      <path d="M15 21.5c1.8 1 8.2 1 10 0" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+    `;
+  }
+  if (type === "gate") {
+    return `
+      <path d="M12 27V15l8-4 8 4v12" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M15.5 16.5v8m9-8v8M12 24h16" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <path d="M17 20h6" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+    `;
+  }
+  if (type === "sensor") {
+    return `
+      <circle cx="20" cy="21" r="2.4" fill="__ACCENT__"/>
+      <path d="M20 12v4m0 10v2" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <path d="M14.5 15.5a8 8 0 0 0 0 11m11-11a8 8 0 0 1 0 11" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <path d="M11 12.5a12.5 12.5 0 0 0 0 17m18-17a12.5 12.5 0 0 1 0 17" fill="none" stroke="__ACCENT__" stroke-width="1.8" stroke-linecap="round"/>
+    `;
+  }
+  if (type === "bioswale") {
+    return `
+      <path d="M20 28c-5.5-3.2-7.7-7.3-6.6-12.8 4.1-.1 7 1.6 8.6 5.2 1.7-3 4.3-4.5 7.9-4.5.5 5.3-1.7 9.3-6.8 12.1" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M20 15v13" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+    `;
+  }
+  return `
+    <path d="M20 11l7 7-7 11-7-11z" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="20" cy="18" r="2" fill="__ACCENT__"/>
+  `;
 }
 
 function createLucideIcons() {
