@@ -1,11 +1,5 @@
 # FIaaS MVP API Contracts
-
-Base URL:
-
-```text
-http://localhost:4173
 ```
-
 ## Dashboard
 
 ```text

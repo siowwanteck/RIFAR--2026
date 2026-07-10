@@ -9,6 +9,16 @@ export function advanceSimulation(state, seconds = 3, event = {}) {
     next = applyConfirmedAction(next, event.confirmedActionId);
   }
 
+  return recomputeDerivedState(next);
+}
+
+export function applyConfirmedActionWithoutWeatherStep(state, actionId) {
+  const next = applyConfirmedAction(state, actionId);
+  return recomputeDerivedState(next);
+}
+
+function recomputeDerivedState(next) {
+
   const gateClosed = !next.infrastructure.tidalGates.outlet.open;
   const backflowPressure = Math.max(0, (next.weather.riverLevelM - 1.35) * 0.016 + (next.weather.tideLevelM - 1.1) * 0.012);
   const backflowInflow = gateClosed ? backflowPressure * 0.22 : backflowPressure;

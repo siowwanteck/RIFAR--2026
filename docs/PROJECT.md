@@ -117,7 +117,7 @@ The platform also provides APIs for third-party integration.
 
 ---
 
-# Key Technologies
+# Key Technologies （ Future ）
 
 - IoT
 - MQTT

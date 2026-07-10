@@ -63,20 +63,15 @@ test("issuing a flood alert appears in recommendations and adds an alert timelin
   );
 });
 
-test("dashboard can surface a flood alert immediately after the first simulation warmup", () => {
+test("dashboard warmup advances simulation state only when explicitly requested", () => {
   resetSimulation();
 
   const initial = getDashboardState();
   const warmed = getDashboardState("NOW", { warmupSeconds: 3 });
 
-  assert.equal(
-    initial.recommendations.some((item) => item.id === "issue-flood-alert"),
-    false,
-  );
-  assert.equal(
-    warmed.recommendations.some((item) => item.id === "issue-flood-alert"),
-    true,
-  );
+  assert.equal(initial.generatedAt === warmed.generatedAt, false);
+  assert.ok(warmed.current.rainfallMmPerHour !== initial.current.rainfallMmPerHour);
+  assert.ok(warmed.current.averageWaterLevelM !== initial.current.averageWaterLevelM);
 });
 
 test("48-hour forecast responds to current risk and pump state", () => {
@@ -91,6 +86,13 @@ test("48-hour forecast responds to current risk and pump state", () => {
   assert.equal(highForecast.timeline.length, 8);
   assert.equal(highForecast.peak.riskLevel, "CRITICAL");
   assert.ok(mitigatedForecast.peak.score < highForecast.peak.score);
+});
+
+test("initial demo forecast starts below critical risk", () => {
+  const forecast = generateForecast48h(createInitialState());
+
+  assert.notEqual(forecast.peak.riskLevel, "CRITICAL");
+  assert.ok(["MEDIUM", "HIGH"].includes(forecast.peak.riskLevel));
 });
 
 test("digital twin layers use real Taman Sri Muda coordinates and scale overlays by scenario", () => {
@@ -159,7 +161,7 @@ test("affected areas table uses pilot-site roads and drainage assets", async () 
     "Jalan Nyaman 25/20",
     "Jalan Bakti 25/15",
     "Existing attenuation tank zone",
-    "Tidal gate outlet",
+    "Tidal gate zone",
   ]);
 });
 
@@ -254,4 +256,16 @@ test("undoing a confirmed action restores the prior recommendation state", () =>
 
   assert.deepEqual(afterUndo, before);
   assert.equal(afterUndo.find((item) => item.id === "act-pump-outflow").status, "pending");
+});
+
+test("confirming an action does not change rain intensity", () => {
+  resetSimulation();
+  const before = getDashboardState();
+
+  confirmRecommendedAction("act-pump-outflow");
+  const afterConfirm = getDashboardState();
+
+  assert.equal(afterConfirm.current.rainfallMmPerHour, before.current.rainfallMmPerHour);
+  assert.equal(afterConfirm.current.rainfallChangePercent, before.current.rainfallChangePercent);
+  assert.equal(afterConfirm.current.pumpsActive, 1);
 });

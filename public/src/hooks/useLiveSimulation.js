@@ -14,7 +14,7 @@ export function createLiveSimulation({ intervalMs = 3000, onUpdate }) {
   }
 
   function start() {
-    emit({ warmupSeconds: intervalMs / 1000 });
+    emit();
     timerId = window.setInterval(() => {
       stepSimulation(intervalMs / 1000);
       emit();

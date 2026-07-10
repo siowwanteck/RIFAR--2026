@@ -1,6 +1,6 @@
 import { affectedZones, mapMarkers, tamanSriMuda } from "../data/locations.js";
 import { createInitialState } from "../data/initialState.js";
-import { advanceSimulation } from "../simulation/floodModel.js";
+import { advanceSimulation, applyConfirmedActionWithoutWeatherStep } from "../simulation/floodModel.js";
 import { generateForecast48h } from "../simulation/weatherScenario.js";
 
 let currentState = createInitialState();
@@ -121,7 +121,7 @@ export function getSystemStatus() {
 
 export function confirmRecommendedAction(actionId) {
   undoableActionSnapshots.set(actionId, structuredClone(currentState));
-  currentState = advanceSimulation(currentState, 2, { confirmedActionId: actionId });
+  currentState = applyConfirmedActionWithoutWeatherStep(currentState, actionId);
   return {
     status: "confirmed",
     actionId,
