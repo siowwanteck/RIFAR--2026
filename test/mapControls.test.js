@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import { renderMapPanel } from "../src/components/map/mapPanel.js";
 import {
@@ -11,6 +12,9 @@ import {
 } from "../src/components/map/leafletDigitalTwin.js";
 import { createInitialState } from "../src/data/initialState.js";
 import { getDigitalTwinLayers } from "../src/services/mockApi.js";
+
+const mapSource = readFileSync(new URL("../src/components/map/leafletDigitalTwin.js", import.meta.url), "utf8");
+const dashboardCss = readFileSync(new URL("../src/styles/dashboard.css", import.meta.url), "utf8");
 
 test("map panel renders a flood area toggle button with active state", async () => {
   const state = {
@@ -60,4 +64,14 @@ test("map fit bounds cover markers and flood overlays for the pilot area", () =>
   assert.ok(bounds[1][0] > layers.mapCenter.lat);
   assert.ok(bounds[0][1] < layers.mapCenter.lng);
   assert.ok(bounds[1][1] > layers.mapCenter.lng);
+});
+
+test("map updates do not auto-fit on every simulation tick", () => {
+  assert.doesNotMatch(mapSource, /updateLeaflet\(layers\)[\s\S]*fitLeafletToLayers\(this\.leafletMap,\s*layers\)/);
+  assert.doesNotMatch(mapSource, /updateMapLibre\(layers,\s*mapLayerVisibility[\s\S]*this\.maplibreMap\.fitBounds\(/);
+});
+
+test("map containers fill the card height and leaflets resize after layout changes", () => {
+  assert.match(dashboardCss, /\.digital-twin-map,[\s\S]*\.leaflet-container\s*{[^}]*width:\s*100%[^}]*height:\s*100%/s);
+  assert.match(mapSource, /this\.leafletMap\.invalidateSize\(/);
 });

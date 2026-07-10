@@ -16,9 +16,16 @@ test("forecast panel reserves enough room for summary values", () => {
 
 test("map panel keeps a fixed map viewport when the operational timeline grows", () => {
   assert.match(dashboardCss, /\.operations-grid\s*{[^}]*align-items:\s*stretch/s);
-  assert.match(dashboardCss, /\.map-panel\s*{[^}]*align-self:\s*start/s);
-  assert.match(dashboardCss, /\.map-shell\s*{[^}]*height:\s*clamp\(520px,\s*calc\(100vh - 250px\),\s*680px\)/s);
-  assert.doesNotMatch(dashboardCss, /\.map-shell\s*{[^}]*height:\s*100%/s);
+  assert.match(dashboardCss, /\.workspace\s*{[^}]*display:\s*grid/s);
+  assert.match(dashboardCss, /\.workspace\s*{[^}]*grid-template-rows:\s*auto auto minmax\(0,\s*1fr\) auto/s);
+  assert.match(dashboardCss, /\.operations-grid\s*{[^}]*min-height:\s*0/s);
+  assert.match(dashboardCss, /\.map-panel\s*{[^}]*display:\s*flex/s);
+  assert.match(dashboardCss, /\.map-panel\s*{[^}]*flex-direction:\s*column/s);
+  assert.match(dashboardCss, /\.map-panel\s*{[^}]*height:\s*100%/s);
+  assert.match(dashboardCss, /\.map-shell\s*{[^}]*min-height:\s*0/s);
+  assert.match(dashboardCss, /\.map-shell\s*{[^}]*height:\s*100%/s);
+  assert.match(dashboardCss, /\.map-shell\s*{[^}]*flex:\s*1 1 auto/s);
+  assert.doesNotMatch(dashboardCss, /\.map-shell\s*{[^}]*height:\s*clamp\(/s);
 });
 
 test("recommendations render as a compact queue with a view all action", () => {

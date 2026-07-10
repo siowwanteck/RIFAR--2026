@@ -10,6 +10,12 @@ export class LeafletDigitalTwin {
     this.markerLayer = null;
     this.overlayLayer = null;
     this.pendingLayers = null;
+    this.resizeFrame = null;
+    this.handleWindowResize = () => this.scheduleResizeSync();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", this.handleWindowResize);
+    }
   }
 
   mount(layers, mode = "2d", mapLayerVisibility = { showFloodAreas: true }) {
@@ -77,6 +83,7 @@ export class LeafletDigitalTwin {
     this.maplibreMap.on("load", () => {
       addBuildingExtrusions(this.maplibreMap);
       this.update(this.pendingLayers, mapLayerVisibility);
+      this.scheduleResizeSync();
     });
   }
 
@@ -146,8 +153,8 @@ export class LeafletDigitalTwin {
         .addTo(this.markerLayer);
     });
 
-    fitLeafletToLayers(this.leafletMap, layers);
     createLucideIcons();
+    this.scheduleResizeSync();
   }
 
   updateMapLibre(layers, mapLayerVisibility = { showFloodAreas: true }) {
@@ -349,18 +356,14 @@ export class LeafletDigitalTwin {
         },
       });
     }
-
-    const bounds = getMapFitBounds(layers);
-    this.maplibreMap.fitBounds(toLngLatBounds(bounds), {
-      padding: { top: 52, right: 52, bottom: 52, left: 52 },
-      maxZoom: mapLibre3dConfig.camera.zoom,
-      pitch: mapLibre3dConfig.camera.pitch,
-      bearing: mapLibre3dConfig.camera.bearing,
-      duration: 500,
-    });
+    this.scheduleResizeSync();
   }
 
   destroy() {
+    if (this.resizeFrame) {
+      window.cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = null;
+    }
     if (this.leafletMap) {
       this.leafletMap.remove();
       this.leafletMap = null;
@@ -371,6 +374,23 @@ export class LeafletDigitalTwin {
     }
     this.markerLayer = null;
     this.overlayLayer = null;
+  }
+
+  scheduleResizeSync() {
+    if (typeof window === "undefined") return;
+    if (this.resizeFrame) {
+      window.cancelAnimationFrame(this.resizeFrame);
+    }
+
+    this.resizeFrame = window.requestAnimationFrame(() => {
+      this.resizeFrame = null;
+      if (this.leafletMap) {
+        this.leafletMap.invalidateSize();
+      }
+      if (this.maplibreMap) {
+        this.maplibreMap.resize();
+      }
+    });
   }
 }
 
@@ -505,23 +525,6 @@ function lineFeature(line, properties) {
 
 function toLatLngs(coordinates) {
   return coordinates.map(([lng, lat]) => [lat, lng]);
-}
-
-function toLngLatBounds(bounds) {
-  return [
-    [bounds[0][1], bounds[0][0]],
-    [bounds[1][1], bounds[1][0]],
-  ];
-}
-
-function fitLeafletToLayers(map, layers) {
-  const bounds = getMapFitBounds(layers);
-  map.fitBounds(bounds, {
-    padding: [38, 38],
-    maxZoom: 16.7,
-    animate: true,
-    duration: 0.5,
-  });
 }
 
 function addArrowMarker(path, latLngs, layer) {
