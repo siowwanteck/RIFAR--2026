@@ -650,67 +650,92 @@ function markerTone(status) {
 
 function mapLibreMarkerSvg(type, tone) {
   const accent = markerToneColor(tone);
+  const outline = "#35586b";
+  const paper = "#f3fbff";
+  const sky = "#d9edf6";
+  const steel = "#95bdcc";
   const glyph = infrastructureGlyph(type);
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
       <defs>
-        <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow dx="0" dy="0" stdDeviation="2.4" flood-color="${accent}" flood-opacity="0.45"/>
+        <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="1.2" stdDeviation="1.6" flood-color="#6b8ea0" flood-opacity="0.28"/>
         </filter>
       </defs>
-      <circle cx="20" cy="20" r="15.5" fill="#071521" stroke="${accent}" stroke-width="2.4" filter="url(#glow)"/>
-      <circle cx="20" cy="20" r="12.5" fill="rgba(11,31,46,0.94)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-      ${glyph.replaceAll("__ACCENT__", accent)}
+      <g filter="url(#shadow)">
+        <circle cx="20" cy="20.8" r="15.6" fill="#ffffff" fill-opacity="0.92"/>
+        ${glyph
+          .replaceAll("__ACCENT__", accent)
+          .replaceAll("__OUTLINE__", outline)
+          .replaceAll("__PAPER__", paper)
+          .replaceAll("__SKY__", sky)
+          .replaceAll("__STEEL__", steel)}
+      </g>
     </svg>
   `.trim();
 }
 
 function markerToneColor(tone) {
-  if (tone === "green") return "#2bd67b";
-  if (tone === "orange") return "#ffb347";
-  if (tone === "red") return "#ff6b6b";
-  return "#6dd7ff";
+  if (tone === "green") return "#2a9d67";
+  if (tone === "orange") return "#df9a38";
+  if (tone === "red") return "#d86a6a";
+  return "#5aa9c9";
 }
 
 function infrastructureGlyph(type) {
   if (type === "pump") {
     return `
-      <rect x="11" y="16" width="10" height="8" rx="2" fill="none" stroke="__ACCENT__" stroke-width="2"/>
-      <path d="M21 20h6.5a3.5 3.5 0 1 1 0 7H25" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
-      <path d="M14 14v-2.5m4 2.5v-2.5" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <rect x="9.5" y="26" width="21" height="3.2" rx="1.3" fill="__STEEL__"/>
+      <rect x="11" y="13.2" width="8.6" height="12.4" rx="1.6" fill="__SKY__" stroke="__OUTLINE__" stroke-width="1.8"/>
+      <rect x="18.6" y="15" width="8.2" height="9.2" rx="1.6" fill="__PAPER__" stroke="__OUTLINE__" stroke-width="1.8"/>
+      <path d="M13.2 13.2v-2.1c0-1.5 1.2-2.7 2.7-2.7h3.8c1.2 0 2.1.9 2.1 2.1v1.7" fill="none" stroke="__OUTLINE__" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M26.8 18.9h2.3" stroke="__OUTLINE__" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M9 18.9h2" stroke="__OUTLINE__" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M21 12.2h4.5" stroke="__OUTLINE__" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="23.5" cy="10" r="1.6" fill="__STEEL__" stroke="__OUTLINE__" stroke-width="1.4"/>
+      <path d="M22.6 18.2c1 1.5 1 2.5 0 3.2-.9.7-2.1.4-2.5-.4-.4-.9.2-1.7 1-2.5.3-.3.7-.7 1-.3.1 0 .3 0 .5 0z" fill="__ACCENT__"/>
     `;
   }
   if (type === "tank") {
     return `
-      <ellipse cx="20" cy="14.5" rx="7.5" ry="3.5" fill="none" stroke="__ACCENT__" stroke-width="2"/>
-      <path d="M12.5 14.5v10c0 2 3.4 3.5 7.5 3.5s7.5-1.5 7.5-3.5v-10" fill="none" stroke="__ACCENT__" stroke-width="2"/>
-      <path d="M15 21.5c1.8 1 8.2 1 10 0" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="20" cy="10.8" rx="7.2" ry="2.8" fill="__SKY__" stroke="__OUTLINE__" stroke-width="1.7"/>
+      <path d="M12.8 10.8v12.5c0 1.7 3.2 3 7.2 3s7.2-1.3 7.2-3V10.8" fill="__PAPER__" stroke="__OUTLINE__" stroke-width="1.7"/>
+      <path d="M12.8 16.5c1.4 1.2 4.3 1.9 7.2 1.9s5.8-.7 7.2-1.9" fill="none" stroke="__STEEL__" stroke-width="1.5"/>
+      <rect x="16.6" y="27" width="6.8" height="2.1" rx="1" fill="__STEEL__"/>
     `;
   }
   if (type === "gate") {
     return `
-      <path d="M12 27V15l8-4 8 4v12" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M15.5 16.5v8m9-8v8M12 24h16" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
-      <path d="M17 20h6" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <rect x="10" y="11.2" width="20" height="2.2" rx="1" fill="__STEEL__"/>
+      <rect x="11.3" y="13.4" width="4.4" height="12.3" rx="1.5" fill="__PAPER__" stroke="__OUTLINE__" stroke-width="1.5"/>
+      <rect x="24.3" y="13.4" width="4.4" height="12.3" rx="1.5" fill="__PAPER__" stroke="__OUTLINE__" stroke-width="1.5"/>
+      <rect x="15.7" y="15.6" width="8.6" height="6.8" rx="1.1" fill="__STEEL__" stroke="__OUTLINE__" stroke-width="1.4"/>
+      <path d="M20 10.8v-2.3" stroke="__OUTLINE__" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M17.4 8.8h5.2" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <path d="M13 26c2.1-1 4.6-1.5 7-1.5s4.9.5 7 1.5" fill="none" stroke="__ACCENT__" stroke-width="1.7" stroke-linecap="round"/>
     `;
   }
   if (type === "sensor") {
     return `
-      <circle cx="20" cy="21" r="2.4" fill="__ACCENT__"/>
-      <path d="M20 12v4m0 10v2" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
-      <path d="M14.5 15.5a8 8 0 0 0 0 11m11-11a8 8 0 0 1 0 11" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
-      <path d="M11 12.5a12.5 12.5 0 0 0 0 17m18-17a12.5 12.5 0 0 1 0 17" fill="none" stroke="__ACCENT__" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="13.2" y="10.2" width="13.6" height="13.2" rx="3" fill="__PAPER__" stroke="__OUTLINE__" stroke-width="1.7"/>
+      <circle cx="17.2" cy="19.3" r="1.8" fill="__SKY__" stroke="__OUTLINE__" stroke-width="1.2"/>
+      <path d="M20.8 16.2c1.7 0 3.1 1.4 3.1 3.1M20.8 13.2c3.4 0 6.1 2.8 6.1 6.1" fill="none" stroke="__ACCENT__" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M20 23.4v4.4" stroke="__OUTLINE__" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M16.8 27.8h6.4" stroke="__STEEL__" stroke-width="2.1" stroke-linecap="round"/>
     `;
   }
   if (type === "bioswale") {
     return `
-      <path d="M20 28c-5.5-3.2-7.7-7.3-6.6-12.8 4.1-.1 7 1.6 8.6 5.2 1.7-3 4.3-4.5 7.9-4.5.5 5.3-1.7 9.3-6.8 12.1" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M20 15v13" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linecap="round"/>
+      <path d="M10.5 26.8c2.6-2 6-3.1 9.5-3.1s6.9 1.1 9.5 3.1" fill="none" stroke="__STEEL__" stroke-width="2" stroke-linecap="round"/>
+      <path d="M20 27V13.2" stroke="__OUTLINE__" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M20 14.5c-1.9-2.6-4.7-3.8-8.2-3.6.2 4.5 2.3 7.4 6.5 8.7" fill="__SKY__" stroke="__OUTLINE__" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M20 16.2c1.5-2.9 4.1-4.4 7.8-4.5.4 4.4-1.4 7.6-5.6 9.4" fill="__PAPER__" stroke="__OUTLINE__" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M20 24.5c0-2.7 1.5-4.6 4.6-5.7" fill="none" stroke="__ACCENT__" stroke-width="1.6" stroke-linecap="round"/>
     `;
   }
   return `
-    <path d="M20 11l7 7-7 11-7-11z" fill="none" stroke="__ACCENT__" stroke-width="2" stroke-linejoin="round"/>
-    <circle cx="20" cy="18" r="2" fill="__ACCENT__"/>
+    <path d="M20 9.8l6.8 6.8-6.8 12.2-6.8-12.2z" fill="__PAPER__" stroke="__OUTLINE__" stroke-width="1.8" stroke-linejoin="round"/>
+    <circle cx="20" cy="16.8" r="2.1" fill="__ACCENT__"/>
   `;
 }
 

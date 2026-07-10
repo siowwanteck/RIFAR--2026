@@ -80,4 +80,7 @@ test("3d asset markers render with infrastructure icons instead of dark circle d
   assert.match(mapSource, /id:\s*"asset-icons"[\s\S]*type:\s*"symbol"/);
   assert.match(mapSource, /"icon-image":\s*\["get",\s*"iconId"\]/);
   assert.doesNotMatch(mapSource, /id:\s*"asset-circles"/);
+  assert.match(mapSource, /const paper = "#f3fbff"/);
+  assert.match(mapSource, /const sky = "#d9edf6"/);
+  assert.doesNotMatch(mapSource, /fill="#071521"/);
 });
