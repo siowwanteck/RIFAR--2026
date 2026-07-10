@@ -333,7 +333,7 @@ export class LeafletDigitalTwin {
         source: "asset-markers",
         layout: {
           "icon-image": ["get", "iconId"],
-          "icon-size": 1,
+          "icon-size": 1.25,
           "icon-allow-overlap": true,
           "icon-anchor": "center",
         },
@@ -348,7 +348,7 @@ export class LeafletDigitalTwin {
         layout: {
           "text-field": ["concat", ["get", "name"], "\n", ["get", "value"]],
           "text-size": 11,
-          "text-offset": [0, 2.2],
+          "text-offset": [0, 2.6],
           "text-anchor": "top",
         },
         paint: {
