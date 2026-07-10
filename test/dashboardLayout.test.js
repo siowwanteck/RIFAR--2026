@@ -14,10 +14,11 @@ test("forecast panel reserves enough room for summary values", () => {
   assert.match(dashboardCss, /\.forecast-summary\s*{[^}]*margin-top:\s*8px/s);
 });
 
-test("map panel stretches to remove unused space below the digital twin", () => {
+test("map panel keeps a fixed map viewport when the operational timeline grows", () => {
   assert.match(dashboardCss, /\.operations-grid\s*{[^}]*align-items:\s*stretch/s);
-  assert.match(dashboardCss, /\.map-panel\s*{[^}]*grid-template-rows:\s*auto auto minmax\(0,\s*1fr\)/s);
-  assert.match(dashboardCss, /\.map-shell\s*{[^}]*height:\s*100%/s);
+  assert.match(dashboardCss, /\.map-panel\s*{[^}]*align-self:\s*start/s);
+  assert.match(dashboardCss, /\.map-shell\s*{[^}]*height:\s*clamp\(428px,\s*calc\(100vh - 326px\),\s*540px\)/s);
+  assert.doesNotMatch(dashboardCss, /\.map-shell\s*{[^}]*height:\s*100%/s);
 });
 
 test("recommendations render as a compact queue with a view all action", () => {

@@ -3,8 +3,15 @@ import assert from "node:assert/strict";
 
 import { createInitialState } from "../src/data/initialState.js";
 import { advanceSimulation } from "../src/simulation/floodModel.js";
+import { buildRecommendations } from "../src/simulation/recommendationEngine.js";
 import { generateForecast48h } from "../src/simulation/weatherScenario.js";
-import { getDigitalTwinLayers } from "../src/services/mockApi.js";
+import {
+  confirmRecommendedAction,
+  getDigitalTwinLayers,
+  getRecommendedActions,
+  resetSimulation,
+  undoRecommendedAction,
+} from "../src/services/mockApi.js";
 import { mapLibre3dConfig } from "../src/data/mapConfig.js";
 
 test("heavy rain increases water level, tank capacity, risk, and affected area", () => {
@@ -29,6 +36,30 @@ test("confirmed pump activation reduces water pressure and records timeline entr
   assert.ok(later.hydrology.waterLevelM < confirmed.hydrology.waterLevelM + 0.05);
   assert.equal(confirmed.recommendations.find((item) => item.id === "act-pump-outflow").status, "confirmed");
   assert.match(confirmed.alerts[0].title, /Outflow Pump Station/);
+});
+
+test("issuing a flood alert appears in recommendations and adds an alert timeline entry when confirmed", () => {
+  const state = createInitialState();
+  state.risk.score = 89;
+  state.risk.level = "CRITICAL";
+  state.hydrology.predictedDepthM = 1.18;
+  state.weather.rainIntensity = 34;
+  state.recommendations = buildRecommendations(state);
+
+  const alertAction = state.recommendations.find((item) => item.id === "issue-flood-alert");
+  const confirmed = advanceSimulation(state, 2, { confirmedActionId: "issue-flood-alert" });
+
+  assert.ok(alertAction);
+  assert.equal(alertAction.status, "pending");
+  assert.equal(alertAction.requiresConfirmation, true);
+  assert.equal(
+    confirmed.recommendations.find((item) => item.id === "issue-flood-alert").status,
+    "confirmed",
+  );
+  assert.ok(confirmed.alerts.some((alert) => /Flood alert/i.test(alert.title)));
+  assert.ok(
+    confirmed.alerts.some((alert) => /Jalan Teladan|Jalan Nyaman|field/i.test(alert.detail)),
+  );
 });
 
 test("48-hour forecast responds to current risk and pump state", () => {
@@ -59,11 +90,19 @@ test("digital twin layers use real Taman Sri Muda coordinates and scale overlays
 test("digital twin assets move together to the requested target center", () => {
   const layers = getDigitalTwinLayers(createInitialState(), "NOW");
   const pondSensor = layers.markers.find((marker) => marker.id === "IoT sensor");
+  const tankMarker = layers.markers.find((marker) => marker.id === "tank-4000");
+  const pumpMarker = layers.markers.find((marker) => marker.id === "outflow-pump");
+  const gateMarker = layers.markers.find((marker) => marker.id === "tidal-gate");
+  const bioswaleMarker = layers.markers.find((marker) => marker.id === "bioswale-field");
   const tankZone = layers.floodOverlays.find((overlay) => overlay.id === "field-tank-zone");
 
   assert.deepEqual(layers.mapCenter, { lat: 3.032111111111111, lng: 101.52705555555555 });
-  assert.deepEqual({ lat: pondSensor.lat, lng: pondSensor.lng }, { lat: 3.0301, lng: 101.5396 });
-  assert.deepEqual({ lat: tankZone.lat, lng: tankZone.lng }, { lat: 3.028111, lng: 101.526356 });
+  assert.deepEqual({ lat: pondSensor.lat, lng: pondSensor.lng }, { lat: 3.035728, lng: 101.528741 });
+  assert.deepEqual({ lat: tankMarker.lat, lng: tankMarker.lng }, { lat: 3.03081, lng: 101.5275 });
+  assert.deepEqual({ lat: pumpMarker.lat, lng: pumpMarker.lng }, { lat: 3.030253, lng: 101.527528 });
+  assert.deepEqual({ lat: gateMarker.lat, lng: gateMarker.lng }, { lat: 3.029803, lng: 101.525822 });
+  assert.deepEqual({ lat: bioswaleMarker.lat, lng: bioswaleMarker.lng }, { lat: 3.029857, lng: 101.527443 });
+  assert.deepEqual({ lat: tankZone.lat, lng: tankZone.lng }, { lat: 3.03081, lng: 101.5275 });
 });
 
 test("flood overlays shrink and lighten after the visual tuning pass", () => {
@@ -88,7 +127,7 @@ test("digital twin focuses on the Jalan Teladan pilot assets and hydraulic paths
   assert.ok(overlayNames.includes("Jalan Teladan 25/22"));
   assert.ok(overlayNames.includes("Jalan Nyaman 25/20"));
   assert.ok(overlayNames.includes("Jalan Bakti 25/15"));
-  assert.ok(overlayNames.includes("Existing field / attenuation tank zone"));
+  assert.ok(overlayNames.includes("Existing attenuation tank zone"));
   assert.ok(layers.corridors.some((corridor) => corridor.name === "Klang River downstream corridor"));
   assert.ok(layers.flowPaths.some((path) => path.id === "residential-runoff"));
   assert.ok(layers.flowPaths.some((path) => path.id === "river-backflow-risk"));
@@ -103,7 +142,7 @@ test("affected areas table uses pilot-site roads and drainage assets", async () 
     "Jalan Teladan 25/22",
     "Jalan Nyaman 25/20",
     "Jalan Bakti 25/15",
-    "Existing field / attenuation tank zone",
+    "Existing attenuation tank zone",
     "Tidal gate outlet",
   ]);
 });
@@ -183,4 +222,20 @@ test("3D digital twin uses an open vector city style and building extrusion conf
   assert.equal(mapLibre3dConfig.camera.bearing, -15);
   assert.ok(mapLibre3dConfig.buildingLayers.length >= 1);
   assert.ok(mapLibre3dConfig.buildingLayers.every((layer) => layer.type === "fill-extrusion"));
+});
+
+test("undoing a confirmed action restores the prior recommendation state", () => {
+  resetSimulation();
+  const before = structuredClone(getRecommendedActions());
+
+  confirmRecommendedAction("act-pump-outflow");
+  const afterConfirm = getRecommendedActions();
+
+  assert.equal(afterConfirm.find((item) => item.id === "act-pump-outflow").status, "confirmed");
+
+  undoRecommendedAction("act-pump-outflow");
+  const afterUndo = getRecommendedActions();
+
+  assert.deepEqual(afterUndo, before);
+  assert.equal(afterUndo.find((item) => item.id === "act-pump-outflow").status, "pending");
 });
