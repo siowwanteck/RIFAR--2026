@@ -1,8 +1,14 @@
 import { riskClass } from "../../utils/formatters.js";
 
+const CHART_VIEWBOX_WIDTH = 360;
+const CHART_VIEWBOX_HEIGHT = 150;
+const CHART_BASELINE_Y = 138;
+const CHART_SCORE_BOTTOM_Y = 132;
+
 export function renderForecastPanel(forecast, selectedScenarioKey) {
   const points = forecast.chartTimeline;
-  const polyline = buildPolyline(points);
+  const chartPoints = buildChartPoints(points);
+  const linePath = buildSmoothLine(chartPoints);
   const selected = points.find((point) => point.key === selectedScenarioKey) ?? points[0];
 
   return `
@@ -19,18 +25,22 @@ export function renderForecastPanel(forecast, selectedScenarioKey) {
         <span>Medium</span>
         <span>Low</span>
       </div>
-      <svg viewBox="0 0 360 150" role="img" aria-label="Flood risk line chart">
-        <defs>
-          <linearGradient id="riskLineFill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stop-color="#ff5a50" stop-opacity="0.45" />
-            <stop offset="55%" stop-color="#f2a93b" stop-opacity="0.2" />
-            <stop offset="100%" stop-color="#28d17c" stop-opacity="0.08" />
-          </linearGradient>
-        </defs>
-        <path class="risk-area" d="${buildArea(polyline)}"></path>
-        <polyline class="risk-line" points="${polyline}"></polyline>
-        ${points.map((point, index) => chartDot(point, index, selectedScenarioKey)).join("")}
-      </svg>
+      <div class="risk-chart-canvas">
+        <svg viewBox="0 0 360 150" preserveAspectRatio="none" role="img" aria-label="Flood risk line chart">
+          <defs>
+            <linearGradient id="riskLineFill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff5a50" stop-opacity="0.32" />
+              <stop offset="55%" stop-color="#f2a93b" stop-opacity="0.16" />
+              <stop offset="100%" stop-color="#28d17c" stop-opacity="0.05" />
+            </linearGradient>
+          </defs>
+          <path class="risk-area" d="${buildArea(chartPoints, linePath)}"></path>
+          <path class="risk-line" d="${linePath}"></path>
+        </svg>
+        <div class="risk-dots" aria-hidden="true">
+          ${points.map((point, index) => chartDot(point, index, points.length, selectedScenarioKey)).join("")}
+        </div>
+      </div>
       <div class="risk-axis">
         ${points.map((point) => `
           <button type="button" class="${point.key === selectedScenarioKey ? "active" : ""}" data-scenario="${point.key}">
@@ -55,22 +65,58 @@ export function renderForecastPanel(forecast, selectedScenarioKey) {
   `;
 }
 
-function buildPolyline(points) {
-  return points.map((point, index) => {
-    const x = 24 + index * (312 / (points.length - 1));
-    const y = 132 - point.score * 1.08;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
+function buildChartPoints(points) {
+  return points.map((point, index) => ({
+    x: chartX(index, points.length),
+    y: chartY(point.score),
+  }));
 }
 
-function buildArea(polyline) {
-  const first = polyline.split(" ")[0].split(",")[0];
-  const last = polyline.split(" ").at(-1).split(",")[0];
-  return `M ${first},138 L ${polyline} L ${last},138 Z`;
+function buildSmoothLine(points) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+
+  const commands = [`M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`];
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const previous = points[index - 1] ?? points[index];
+    const current = points[index];
+    const next = points[index + 1];
+    const afterNext = points[index + 2] ?? next;
+    const controlPointOne = {
+      x: current.x + (next.x - previous.x) / 6,
+      y: current.y + (next.y - previous.y) / 6,
+    };
+    const controlPointTwo = {
+      x: next.x - (afterNext.x - current.x) / 6,
+      y: next.y - (afterNext.y - current.y) / 6,
+    };
+
+    commands.push(
+      `C ${controlPointOne.x.toFixed(1)},${controlPointOne.y.toFixed(1)} ${controlPointTwo.x.toFixed(1)},${controlPointTwo.y.toFixed(1)} ${next.x.toFixed(1)},${next.y.toFixed(1)}`,
+    );
+  }
+
+  return commands.join(" ");
 }
 
-function chartDot(point, index, selectedScenarioKey) {
-  const x = 24 + index * (312 / 5);
-  const y = 132 - point.score * 1.08;
-  return `<circle class="risk-dot ${riskClass(point.riskLevel)} ${point.key === selectedScenarioKey ? "active" : ""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" data-scenario="${point.key}"></circle>`;
+function buildArea(points, linePath) {
+  if (points.length === 0) return "";
+  const first = points[0];
+  const last = points.at(-1);
+  return `${linePath} L ${last.x.toFixed(1)},${CHART_BASELINE_Y} L ${first.x.toFixed(1)},${CHART_BASELINE_Y} Z`;
+}
+
+function chartDot(point, index, pointCount, selectedScenarioKey) {
+  const x = (chartX(index, pointCount) / CHART_VIEWBOX_WIDTH) * 100;
+  const y = (chartY(point.score) / CHART_VIEWBOX_HEIGHT) * 100;
+  return `<span class="risk-dot ${riskClass(point.riskLevel)} ${point.key === selectedScenarioKey ? "active" : ""}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%" data-scenario="${point.key}"></span>`;
+}
+
+function chartX(index, pointCount) {
+  return ((index + 0.5) * CHART_VIEWBOX_WIDTH) / pointCount;
+}
+
+function chartY(score) {
+  return CHART_SCORE_BOTTOM_Y - score * 1.08;
 }

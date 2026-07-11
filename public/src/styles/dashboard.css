@@ -640,6 +640,15 @@ select {
     linear-gradient(180deg, transparent 0 50%, rgba(242, 169, 59, 0.07) 50% 70%, transparent 70% 100%);
 }
 
+.risk-chart-canvas {
+  position: relative;
+}
+
+.risk-dots {
+  position: absolute;
+  inset: 0 0 0 1px;
+}
+
 .risk-area {
   fill: url("#riskLineFill");
 }
@@ -650,30 +659,41 @@ select {
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: drop-shadow(0 2px 8px rgba(255, 90, 80, 0.18));
 }
 
 .risk-dot {
-  fill: var(--bg-950);
-  stroke: currentColor;
-  stroke-width: 2.2;
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  background: var(--bg-950);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px rgba(7, 19, 31, 0.85);
 }
 
 .risk-dot.active {
-  r: 6px;
-  stroke: #ffffff;
+  width: 10px;
+  height: 10px;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(7, 19, 31, 0.92), 0 0 0 5px rgba(255, 255, 255, 0.1);
 }
 
 .risk-axis {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
   margin-top: 3px;
+  align-items: center;
 }
 
 .risk-axis button {
   border: 0;
   color: var(--muted);
   background: transparent;
+  width: 100%;
+  padding: 0;
+  text-align: center;
   font-size: 0.7rem;
 }
 
