@@ -5,7 +5,7 @@ const lngShift = targetCenter.lng - originalCenter.lng;
 
 export const tamanSriMuda = {
   name: "Taman Sri Muda Pilot Site, Shah Alam",
-  label: "Taman Sri Muda pilot: Jalan Srikandi 25/14",
+  label: "Jalan Srikanda 25/14, Taman Sri Muda",
   center: targetCenter,
   bounds: [
     shiftLatLng([3.0168, 101.5302]),
