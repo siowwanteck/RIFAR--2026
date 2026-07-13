@@ -36,7 +36,7 @@ export function renderSidebar(sources) {
       `).join("")}
     </section>
 
-    <div class="version"><span class="version-drop"></span>FiaaS v1.0.0</div>
+    <div class="version"><span class="version-drop"></span>FIP v1.0.0</div>
   `;
 }
 
