@@ -15,8 +15,8 @@ export function renderSidebar(sources) {
     <div class="brand">
       <div class="brand-mark" aria-hidden="true"></div>
       <div>
-        <strong>FiaaS</strong>
-        <span>Flood Intelligence as a Service</span>
+        <strong>FIP</strong>
+        <span>Flood Intelligence Platform</span>
       </div>
     </div>
 
